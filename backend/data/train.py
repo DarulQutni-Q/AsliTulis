@@ -54,9 +54,8 @@ def extract_all_dataset_features():
         tasks.append((p, 0))
         
     # Real handwriting images (label 1)
-    real_patterns = ["real_*.jpg", "WhatsApp Image*.jpeg", "real_user_*.jpg", "*.png"]
     real_files = []
-    for pat in real_patterns:
+    for pat in ["*.[jJ][pP][gG]", "*.[jJ][pP][eE][gG]", "*.[pP][nN][gG]"]:
         real_files.extend(glob.glob(os.path.join(REAL_DIR, pat)))
     real_files = sorted(list(set(real_files)))
     for p in real_files:
