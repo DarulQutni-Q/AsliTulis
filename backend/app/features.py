@@ -4,24 +4,33 @@ from typing import Dict, List, Tuple, Any
 
 def preprocess_image(img_bgr: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     """
-    Converts image to grayscale, applies bilateral filtering to preserve stroke edges,
-    and returns (gray, binary) with text as foreground (white) and background as black.
+    Converts image to grayscale, applies illumination-invariant background estimation,
+    removes printed notebook margin lines and top header markings,
+    and returns (gray, text_binary) with ink strokes as 255 and paper as 0.
     """
+    h_img, w_img = img_bgr.shape[:2]
     gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
     
-    # Mild denoising
+    # Denoise
     blurred = cv2.GaussianBlur(gray, (3, 3), 0)
     
-    # Otsu thresholding (invert so ink = 255, paper = 0)
-    _, binary = cv2.threshold(blurred, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+    # Illumination-invariant background estimation:
+    # Morphological dilation on blurred grayscale finds local paper background luminance
+    # Subtracting blurred from bg isolates foreground ink strokes regardless of phone shadows or vignettes.
+    bg = cv2.morphologyEx(blurred, cv2.MORPH_DILATE, cv2.getStructuringElement(cv2.MORPH_RECT, (25, 25)))
+    diff = cv2.absdiff(bg, blurred)
     
-    # Remove long horizontal ruling lines if any
-    # Ruling lines are very wide (> 200px) and thin (<= 2px)
-    h_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (45, 1))
-    lines = cv2.morphologyEx(binary, cv2.MORPH_OPEN, h_kernel)
+    # High-contrast thresholding on difference image
+    _, binary = cv2.threshold(diff, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
     
-    # Text mask without ruled lines
-    text_binary = cv2.subtract(binary, lines)
+    # Exclude top 12% printed notebook header (factory brand logos, checkboxes, spiral wire holes)
+    binary[:int(h_img * 0.12), :] = 0
+    
+    # Remove vertical notebook margin lines (typically red or dark lines spanning > 45px vertically)
+    v_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1, 45))
+    v_lines = cv2.morphologyEx(binary, cv2.MORPH_OPEN, v_kernel)
+    v_lines = cv2.dilate(v_lines, cv2.getStructuringElement(cv2.MORPH_RECT, (3, 1)))
+    text_binary = cv2.subtract(binary, v_lines)
     
     return gray, text_binary
 
@@ -31,31 +40,27 @@ def extract_glyph_candidates(text_binary: np.ndarray, max_glyphs: int = 160) -> 
     Filters out margins, paper boundaries, and speckles.
     """
     h_img, w_img = text_binary.shape
-    mx = int(w_img * 0.04) # ignore outer 4% margins
-    my = int(h_img * 0.04)
+    mx = int(w_img * 0.03) # ignore outer 3% margins
+    my = int(h_img * 0.03)
     
     contours, _ = cv2.findContours(text_binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    
     glyphs = []
     
     for cnt in contours:
         x, y, w, h = cv2.boundingRect(cnt)
         
-        # Exclude outer paper boundaries, margins, or binder punch holes
+        # Exclude outer paper boundaries or binder punch holes
         if x < mx or (x + w) > (w_img - mx) or y < my or (y + h) > (h_img - my):
             continue
             
-        # Valid character-sized components (filter out tiny dots, commas, speckles)
         area = cv2.contourArea(cnt)
-        if 18 <= h <= 95 and 14 <= w <= 130 and area >= 60:
+        # Valid character-sized components: lowercase letters to capitals
+        if 12 <= h <= 110 and 8 <= w <= 140 and area >= 35:
             aspect = w / float(h)
-            if 0.20 <= aspect <= 3.0:
-                # Extract normalized 32x32 glyph patch
+            if 0.15 <= aspect <= 3.5:
                 patch = text_binary[y:y+h, x:x+w]
                 patch_norm = cv2.resize(patch, (32, 32), interpolation=cv2.INTER_AREA)
-                
                 density = area / float(w * h) if w * h > 0 else 0
-                
                 glyphs.append({
                     "bbox": (x, y, w, h),
                     "aspect": aspect,
@@ -75,9 +80,9 @@ def compute_glyph_cloning(glyphs: List[Dict[str, Any]]) -> Tuple[float, float, L
     """
     Compares candidate glyphs pairwise across the document.
     Identifies systemic font repetition.
-    In true font/plotter text, recurring instances of the same letter have
-    identical mathematical shape (NCC >= 0.93) and repeat systematically across multiple words.
-    In human handwriting, motor variance causes natural fluctuations (coincidences are <= 0.88).
+    In digital fonts and pen-plotters, repeating instances of the same letter have
+    near-identical mathematical shapes (NCC >= 0.93) and repeat systematically.
+    In human handwriting, motor variance causes natural fluctuations (real letters are <= 0.925).
     
     Returns:
         clone_ratio: Fraction of tested glyphs that have an identical clone
@@ -85,7 +90,7 @@ def compute_glyph_cloning(glyphs: List[Dict[str, Any]]) -> Tuple[float, float, L
         top_clone_pairs: Coordinates and metadata for top detected cloned pairs
         cluster_3plus_count: Number of glyphs participating in multi-instance font clusters
     """
-    if len(glyphs) < 6:
+    if len(glyphs) < 4:
         return 0.0, 0.0, [], 0
         
     num_glyphs = len(glyphs)
@@ -96,25 +101,25 @@ def compute_glyph_cloning(glyphs: List[Dict[str, Any]]) -> Tuple[float, float, L
     # Graph of clone matches at high confidence (>= 0.93)
     clone_matches = {i: set() for i in range(num_glyphs)}
     
-    # Compare glyphs with similar aspect ratio and height
-    for i in range(num_glyphs):
+    # Compare glyphs with compatible aspect ratio and height
+    for i in range(min(num_glyphs, 150)):
         g1 = glyphs[i]
         p1 = g1["patch"].astype(np.float32)
         norm1 = np.linalg.norm(p1)
         if norm1 < 1e-4:
             continue
             
-        for j in range(i + 1, num_glyphs):
+        for j in range(i + 1, min(num_glyphs, 150)):
             g2 = glyphs[j]
             
-            # Spatial separation: must be distinct occurrences (at least 25px apart)
+            # Spatial separation: must be distinct occurrences (at least 25px apart horizontally or 15px vertically)
             dx = abs(g1["center"][0] - g2["center"][0])
             dy = abs(g1["center"][1] - g2["center"][1])
             if dx < 25 and dy < 15:
                 continue
                 
             # Aspect ratio and height compatibility
-            if abs(g1["aspect"] - g2["aspect"]) > 0.30:
+            if abs(g1["aspect"] - g2["aspect"]) > 0.28:
                 continue
             if abs(g1["height"] - g2["height"]) / max(g1["height"], g2["height"]) > 0.22:
                 continue
@@ -137,8 +142,8 @@ def compute_glyph_cloning(glyphs: List[Dict[str, Any]]) -> Tuple[float, float, L
                 clone_matches[i].add(j)
                 clone_matches[j].add(i)
                 
-            # Only record pairs with real, high-confidence clone resemblance (>= 0.91)
-            if ncc >= 0.91:
+            # Only record pairs with real, high-confidence clone resemblance (>= 0.915)
+            if ncc >= 0.915:
                 detected_pairs.append({
                     "score": round(ncc * 100, 1),
                     "g1": g1["bbox"],
@@ -173,67 +178,51 @@ def compute_glyph_cloning(glyphs: List[Dict[str, Any]]) -> Tuple[float, float, L
             if len(curated_pairs) >= 3:
                 break
                 
-    # In handwriting, 1 or 2 isolated pairs with 90-91% is sheer chance (e.g. two vertical stems of 'l').
-    # A true font generator/plotter exhibits systemic repeating allographs across the document.
-    if len(cloned_indices) < 6:
-        clone_ratio = 0.0
-    else:
-        clone_ratio = len(cloned_indices) / float(num_glyphs) if num_glyphs > 0 else 0.0
-        
+    clone_ratio = len(cloned_indices) / float(num_glyphs) if num_glyphs > 0 else 0.0
     return clone_ratio, max_sim, curated_pairs, cluster_3plus_count
 
 def compute_stroke_width_variance(text_binary: np.ndarray) -> Tuple[float, float]:
     """
-    Measures pen pressure gradient and stroke width variation using Distance Transform.
-    Digital font rendering has extremely uniform stroke thickness (low CV < 0.22).
+    Measures pen pressure gradient and stroke width variation using Euclidean Distance Transform.
+    Digital font rendering has extremely uniform stroke thickness (low CV < 0.25).
     Genuine human ballpoint / ink handwriting has natural tapering, pen-up/pen-down pressure
-    gradients, and speed variation (CV > 0.32).
+    gradients, and speed variation (CV > 0.35).
     
     Returns:
         (mean_stroke_width, stroke_width_cv)
     """
-    # Euclidean distance transform
     dist = cv2.distanceTransform(text_binary, cv2.DIST_L2, 5)
-    
-    # Morphological skeleton to isolate medial stroke axis
-    skeleton = np.zeros(text_binary.shape, np.uint8)
-    element = cv2.getStructuringElement(cv2.MORPH_CROSS, (3, 3))
-    temp_bin = text_binary.copy()
-    
-    for _ in range(12):
-        eroded = cv2.erode(temp_bin, element)
-        temp = cv2.dilate(eroded, element)
-        temp = cv2.subtract(temp_bin, temp)
-        skeleton = cv2.bitwise_or(skeleton, temp)
-        temp_bin = eroded.copy()
-        if cv2.countNonZero(temp_bin) == 0:
-            break
-            
-    # Sample stroke radii along the skeleton
-    stroke_radii = dist[skeleton > 0]
-    
-    if len(stroke_radii) < 20:
-        return 1.5, 0.25
-        
-    # Stroke width = 2 * radius
-    stroke_widths = stroke_radii * 2.0
-    mean_sw = float(np.mean(stroke_widths))
-    std_sw = float(np.std(stroke_widths))
-    cv_sw = float(std_sw / mean_sw) if mean_sw > 1e-4 else 0.0
-    
-    return mean_sw, cv_sw
+    sw = dist[dist > 0]
+    if len(sw) < 30:
+        return 1.5, 0.35
+    sw_mean = float(np.mean(sw))
+    sw_std = float(np.std(sw))
+    sw_cv = float(sw_std / sw_mean) if sw_mean > 0 else 0.35
+    return sw_mean, sw_cv
+
+def compute_ink_color_variance(img_bgr: np.ndarray, text_binary: np.ndarray) -> float:
+    """
+    Measures the standard deviation of pixel color values across ink strokes.
+    Digital font rendering uses a uniform RGB fill color (low std < 20.0).
+    Real human handwriting exhibits natural ink pool depletion, solvent absorption into paper fibers,
+    and pressure shading (std >= 25.0).
+    """
+    ink_pixels = img_bgr[text_binary > 0]
+    if len(ink_pixels) < 20:
+        return 30.0
+    return float(np.std(ink_pixels))
 
 def compute_baseline_rigidity(glyphs: List[Dict[str, Any]], img_h: int) -> Tuple[float, float]:
     """
     Groups glyphs into horizontal lines and calculates standard deviation of vertical residuals
     from the fitted baseline.
-    Font-rendered text has a mathematically rigid baseline (low std < 1.4 px, high rigidity %).
-    Human writing naturally meanders and fluctuates vertically (std > 3.2 px).
+    Font-rendered text has a mathematically rigid baseline (low std < 1.8 px, high rigidity %).
+    Human writing naturally meanders and fluctuates vertically (std > 3.0 px).
     
     Returns:
         (baseline_residual_std, baseline_rigidity_pct)
     """
-    if len(glyphs) < 10:
+    if len(glyphs) < 6:
         return 2.5, 75.0
         
     # Group by line based on y-coordinate clustering
@@ -255,7 +244,6 @@ def compute_baseline_rigidity(glyphs: List[Dict[str, Any]], img_h: int) -> Tuple
         lines.append(curr_line)
         
     residuals = []
-    
     for line in lines:
         pts = [(g["center"][0], g["bbox"][1] + g["bbox"][3]) for g in line]
         pts = sorted(pts, key=lambda p: p[0])
@@ -269,7 +257,7 @@ def compute_baseline_rigidity(glyphs: List[Dict[str, Any]], img_h: int) -> Tuple
             res = ys - predicted_ys
             residuals.extend(res.tolist())
             
-    if len(residuals) < 8:
+    if len(residuals) < 6:
         return 2.0, 80.0
         
     res_std = float(np.std(residuals))
@@ -283,9 +271,12 @@ def extract_forensic_features(img_bgr: np.ndarray) -> Dict[str, Any]:
     Main forensic extraction pipeline.
     Combines:
     1. Glyph duplication / clone ratio
-    2. Stroke width coefficient of variation
-    3. Baseline rigidity & residual std
-    4. Glyph size entropy
+    2. Maximum glyph similarity (NCC)
+    3. Stroke width coefficient of variation
+    4. Baseline residual std & rigidity
+    5. Glyph height variation (height_cv)
+    6. Cluster 3+ count (multi-instance font repetition)
+    7. Ink color standard deviation (pigment shading gradient)
     
     Returns structured feature dict for classifier and UI visualization.
     """
@@ -293,9 +284,9 @@ def extract_forensic_features(img_bgr: np.ndarray) -> Dict[str, Any]:
     gray, text_binary = preprocess_image(img_bgr)
     
     # Extract glyph candidates
-    glyphs = extract_glyph_candidates(text_binary, max_glyphs=140)
+    glyphs = extract_glyph_candidates(text_binary, max_glyphs=150)
     
-    # 1. Cloned glyphs
+    # 1. Cloned glyphs & repetition
     clone_ratio, max_sim, top_pairs, cluster_3plus_count = compute_glyph_cloning(glyphs)
     
     # 2. Stroke width variation
@@ -311,12 +302,17 @@ def extract_forensic_features(img_bgr: np.ndarray) -> Dict[str, Any]:
     else:
         height_cv = 0.2
         
+    # 5. Ink pigment variation
+    ink_std = compute_ink_color_variance(img_bgr, text_binary)
+        
     feature_vector = [
         clone_ratio,
         max_sim,
         stroke_cv,
         res_std,
-        height_cv
+        height_cv,
+        cluster_3plus_count,
+        ink_std
     ]
     
     return {
@@ -327,8 +323,9 @@ def extract_forensic_features(img_bgr: np.ndarray) -> Dict[str, Any]:
         "baseline_res_std": res_std,
         "baseline_rigidity": baseline_rigidity,
         "height_cv": height_cv,
-        "num_glyphs_analyzed": len(glyphs),
         "cluster_3plus_count": cluster_3plus_count,
+        "ink_std": ink_std,
+        "num_glyphs_analyzed": len(glyphs),
         "top_pairs": top_pairs,
         "img_width": w_img,
         "img_height": h_img

@@ -9,7 +9,6 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import StratifiedKFold, cross_validate
-from sklearn.metrics import classification_report, roc_auc_score
 
 import sys
 SCRIPT_DIR = os.path.dirname(__file__)
@@ -38,22 +37,24 @@ def process_single_image(args):
             "max_sim": res["max_sim"],
             "stroke_cv": res["stroke_cv"],
             "baseline_res_std": res["baseline_res_std"],
-            "height_cv": res["height_cv"]
+            "height_cv": res["height_cv"],
+            "cluster_3plus_count": res["cluster_3plus_count"],
+            "ink_std": res["ink_std"]
         }
     except Exception as e:
         print(f"Error extracting features from {path}: {e}")
         return None
 
-def extract_all_dataset_features(max_synthetic=120):
+def extract_all_dataset_features():
     tasks = []
     
     # Fake synthetic images (label 0)
-    syn_files = sorted(glob.glob(os.path.join(SYNTHETIC_DIR, "fake_*.jpg")))[:max_synthetic]
+    syn_files = sorted(glob.glob(os.path.join(SYNTHETIC_DIR, "fake_*.jpg")))
     for p in syn_files:
         tasks.append((p, 0))
         
     # Real handwriting images (label 1)
-    real_patterns = ["real_*.jpg", "WhatsApp Image*.jpeg", "real_user_*.jpg"]
+    real_patterns = ["real_*.jpg", "WhatsApp Image*.jpeg", "real_user_*.jpg", "*.png"]
     real_files = []
     for pat in real_patterns:
         real_files.extend(glob.glob(os.path.join(REAL_DIR, pat)))
@@ -81,7 +82,15 @@ def train_and_evaluate_model():
     if len(df) < 20:
         raise ValueError(f"Dataset too small ({len(df)} samples). Ensure images exist in synthetic/ and real/.")
         
-    feature_cols = ["clone_ratio", "max_sim", "stroke_cv", "baseline_res_std", "height_cv"]
+    feature_cols = [
+        "clone_ratio",
+        "max_sim",
+        "stroke_cv",
+        "baseline_res_std",
+        "height_cv",
+        "cluster_3plus_count",
+        "ink_std"
+    ]
     X = df[feature_cols].values
     y = df["label"].values
     
@@ -90,12 +99,12 @@ def train_and_evaluate_model():
         sub = df[df["label"] == label_val]
         print(f"\n--- {name} (N={len(sub)}) ---")
         for col in feature_cols:
-            print(f"  {col:18s}: mean={sub[col].mean():.4f}, std={sub[col].std():.4f}")
+            print(f"  {col:20s}: mean={sub[col].mean():.4f}, std={sub[col].std():.4f}")
             
-    # Pipeline: StandardScaler + RandomForest
+    # Pipeline: StandardScaler + RandomForestClassifier
     pipe = Pipeline([
         ("scaler", StandardScaler()),
-        ("clf", RandomForestClassifier(n_estimators=100, max_depth=6, min_samples_split=4, random_state=42))
+        ("clf", RandomForestClassifier(n_estimators=200, max_depth=10, min_samples_split=2, random_state=42))
     ])
     
     # 5-fold cross validation
@@ -117,7 +126,7 @@ def train_and_evaluate_model():
     feat_imp = {col: round(float(imp), 4) for col, imp in zip(feature_cols, importances)}
     print("\nFeature Importances:")
     for col, imp in sorted(feat_imp.items(), key=lambda x: x[1], reverse=True):
-        print(f"  {col:18s}: {imp * 100:.1f}%")
+        print(f"  {col:20s}: {imp * 100:.1f}%")
         
     # Save model bundle
     artifact = {

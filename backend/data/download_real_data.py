@@ -154,8 +154,9 @@ def main(target_count=150):
     
     print(f"Generating {target_count} authentic human handwriting document pages...")
     for i in range(1, target_count + 1):
-        # Pick 12-16 random stroke sequences for this page
-        page_strokes = [strokes[rng.randint(0, len(strokes) - 1)] for _ in range(16)]
+        # Pick 12-16 distinct random stroke sequences for this page (no duplicates)
+        stroke_indices = rng.sample(range(len(strokes)), 16)
+        page_strokes = [strokes[idx] for idx in stroke_indices]
         
         paper, lines, margin_x = create_lined_paper(rng=rng)
         real_page_img = render_real_human_page(paper, lines, margin_x, page_strokes, rng)

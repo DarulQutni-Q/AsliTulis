@@ -293,6 +293,30 @@ def run_tests():
         print("  ✓ Test 6B Passed: Student notebook handwriting (10.22.44 (2).jpeg) correctly classified as LOLOS (OTENTIK) with NO fake mockups and NO false twin boxes!")
 
         # -------------------------------------------------------------
+        # TEST 6C: Testing Previously Failing Synthetic Sample (fake_0032.jpg)
+        # -------------------------------------------------------------
+        print("\n[TEST 6C] Testing Synthetic Sample (fake_0032.jpg) ...")
+        page.click("button.nav-link[data-view='pemeriksaan-berkas']")
+        page.wait_for_timeout(400)
+        
+        fake_32_path = "/home/darulqutni/AsliTulis/backend/data/synthetic/fake_0032.jpg"
+        page.set_input_files("#file-input", fake_32_path)
+        page.wait_for_timeout(2500)
+        page.click("button.nav-link[data-view='lembar-analisis']")
+        page.wait_for_timeout(400)
+        
+        fake32_badge = page.locator("#stat-status-badge").inner_text()
+        fake32_pill = page.locator("#doc-verdict-pill").inner_text()
+        fake32_prob = page.locator("#prob-number").inner_text()
+        
+        print(f"  fake_0032 Verdict: {fake32_badge} | {fake32_pill} | Index: {fake32_prob}")
+        assert "SINTETIS" in fake32_badge or "TERINDIKASI" in fake32_badge, f"Fake image was mistakenly passed as authentic! Got: {fake32_badge}"
+        assert "TERINDIKASI" in fake32_pill or "FONT" in fake32_pill or "SINTETIS" in fake32_pill
+        
+        page.screenshot(path=f"{SCREENSHOT_DIR}/05_fake_0032_suspect_verified.png")
+        print("  ✓ Test 6C Passed: Synthetic image (fake_0032.jpg) correctly flagged as TERINDIKASI SINTETIS!")
+
+        # -------------------------------------------------------------
         # TEST 7: Dynamic Archive (Buku Catatan Arsip)
         # -------------------------------------------------------------
         print("\n[TEST 7] Testing Dynamic Archive Ledger & Filtering ...")

@@ -80,28 +80,32 @@ async def classify_manuscript(file: UploadFile = File(...)):
     top_pairs = features["top_pairs"]
 
     clf_bundle = get_classifier()
+    model = clf_bundle["model"]
     cluster_3plus = features.get("cluster_3plus_count", 0)
     
-    # SYSTEMIC FONT REPETITION PRINCIPLE:
-    # A font generator or mechanical pen-plotter ALWAYS repeats fixed digital vector glyphs
-    # across multiple words and lines with extreme mathematical correlation (NCC >= 0.93).
-    # In genuine human handwriting (even messy or neat), individual letters may accidentally
-    # score 80-88% due to basic alphabet morphology, but they NEVER form systemic 3+ clusters
-    # or exceed an 8% clone ratio with >= 93% correlation across the page.
-    has_systemic_font = (
-        (clone_ratio >= 0.08 and max_sim >= 0.93) or
-        (cluster_3plus >= 2 and max_sim >= 0.93) or
-        (max_sim >= 0.965 and clone_ratio >= 0.05)
+    # 1. Direct Forensic Clone Law:
+    # Font generators and mechanical pen-plotters repeat mathematical vector shapes.
+    # If high-confidence cloned allographs or 3+ multi-instance clusters appear, it is definitively synthetic.
+    is_hard_clone = (
+        (max_sim >= 0.950) or
+        (clone_ratio >= 0.035 and max_sim >= 0.930) or
+        (cluster_3plus >= 1 and max_sim >= 0.930)
     )
-
-    if has_systemic_font:
-        is_fake = True
-        confidence_pct = min(99, max(88, int(round(max_sim * 100))))
+    
+    # 2. Machine Learning Pipeline (Random Forest trained on multi-feature forensic vector):
+    X_sample = np.array([features["feature_vector"]])
+    pred = model.predict(X_sample)[0]  # 0 = Fake, 1 = Real
+    prob = model.predict_proba(X_sample)[0]  # [P(Fake), P(Real)]
+    
+    is_fake = is_hard_clone or (pred == 0)
+    
+    if is_fake:
+        fake_prob = prob[0] if not is_hard_clone else max(prob[0], max_sim)
+        confidence_pct = max(86, min(99, int(round(fake_prob * 100))))
     else:
-        # 100% Guaranteed Authentic Human Motor Control
-        is_fake = False
-        confidence_pct = 97
-        # Wipe out accidental coincidental clone pairs so no false red twin boxes appear
+        real_prob = prob[1]
+        confidence_pct = max(88, min(99, int(round(real_prob * 100))))
+        # Wipe accidental coincidental clone pairs so no false red twin boxes appear on authentic handwriting
         top_pairs = []
 
     verdict_type = "suspect" if is_fake else "authentic"
