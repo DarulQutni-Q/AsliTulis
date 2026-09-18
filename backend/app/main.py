@@ -84,13 +84,13 @@ def evaluate_image_bytes(contents: bytes, filename: str = "specimen.jpg") -> Dic
     model = clf_bundle["model"]
     cluster_5plus = features.get("cluster_5plus_count", 0)
     
-    # 1. Direct Forensic Clone Law (Strict Multi-Instance Criterion: cluster >= 5 instances):
-    # Font generators and mechanical pen-plotters repeat mathematical vector shapes.
-    # If high-confidence cloned allographs or 5+ multi-instance clusters appear, it is definitively synthetic.
+    # 1. Direct Forensic Multi-Instance Font Repetition Law:
+    # True synthetic font engines repeat glyph templates in large multi-instance clusters (cluster >= 5 instances).
+    # Genuine human handwriting written neatly might accidentally have 1-2 small similar strokes,
+    # but will never exhibit systematic multi-instance font clusters.
     is_hard_clone = (
-        (max_sim >= 0.950) or
-        (clone_ratio >= 0.035 and max_sim >= 0.930) or
-        (cluster_5plus >= 1 and max_sim >= 0.930)
+        (cluster_5plus >= 2 and max_sim >= 0.950) or
+        (cluster_5plus >= 1 and clone_ratio >= 0.08 and max_sim >= 0.940)
     )
     
     # 2. Machine Learning Pipeline (Random Forest trained on multi-feature forensic vector):

@@ -57,7 +57,7 @@ def extract_glyph_candidates(text_binary: np.ndarray, max_glyphs: int = 160) -> 
             
         area = cv2.contourArea(cnt)
         # Valid character-sized components: lowercase letters to capitals
-        if 12 <= h <= 110 and 8 <= w <= 140 and area >= 35:
+        if 14 <= h <= 110 and 10 <= w <= 140 and area >= 55:
             aspect = w / float(h)
             density = area / float(w * h) if w * h > 0 else 0
             if 0.15 <= aspect <= 3.5 and 0.12 <= density <= 0.70:
