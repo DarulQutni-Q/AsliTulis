@@ -47,11 +47,25 @@ Evaluasi dilakukan terhadap seluruh dataset proyek tanpa sampling:
 
 ## Fitur Aplikasi
 
-- Meja Periksa: Input berkas berbasis drag-and-drop dengan visualisasi proses pemindaian.
-- Lembar Analisis: Menampilkan citra dokumen lengkap dengan penanda pin glif kembar, baki legenda interaktif, overlay kisi mistar, dan kaca pembesar 2.5x.
+- Meja Periksa: Input berkas berbasis drag-and-drop dengan dukungan multi-foto dan arsip ZIP satu kelas.
+- Lembar Analisis: Menampilkan citra dokumen terpusat lengkap dengan penanda pin glif kembar, baki legenda interaktif, overlay kisi mistar, dan kaca pembesar 2.5x.
+- Komparasi Berdampingan: Membandingkan naskah uji terhadap spesimen referensi secara berdampingan dalam mode 2 kolom layar penuh.
 - Parameter Terhitung: Menampilkan nilai pengukuran nyata (Kemiripan Glif, Entropi Bentuk, Tekanan Tinta, Linearitas Garis Dasar).
 - Buku Catatan Arsip: Tabel audit riwayat pengujian dengan pencarian teks dan filter status.
+- Rekapitulasi CSV: Ekspor hasil audit kelas dan buku catatan arsip ke format CSV berstandar SIAKAD.
 - Berita Acara PDF: Format laporan resmi siap cetak tanpa menyertakan tombol navigasi UI.
+
+## Tampilan Antarmuka
+
+### Lembar Analisis Forensik (Pemeriksaan Tunggal)
+Visualisasi naskah pindaian terpusat dengan penandaan glif kembar, baki legenda interaktif, garis dasar mistar, dan parameter audit forensik.
+
+![Lembar Analisis Forensik](docs/screenshots/01_lembar_analisis.png)
+
+### Komparasi Berdampingan (Dual-Specimen Comparator)
+Perbandingan naskah uji terhadap spesimen referensi secara berdampingan dalam mode 2 kolom layar penuh untuk memvalidasi perbedaan motorik biologis vs cetakan mekanis.
+
+![Komparasi Berdampingan](docs/screenshots/02_komparasi_berdampingan.png)
 
 ## Struktur Direktori
 
@@ -71,6 +85,8 @@ AsliTulis/
 │   │   └── train.py                # Pipeline pelatihan model Random Forest
 │   └── models/
 │       └── classifier.joblib       # Model biner terkompresi
+├── docs/
+│   └── screenshots/                # Dokumentasi visual antarmuka sistem
 ├── frontend/
 │   ├── assets/                     # Sampel pengujian dan aset gambar
 │   ├── css/
@@ -78,10 +94,6 @@ AsliTulis/
 │   ├── js/
 │   │   └── app.js                  # Logika interaktif antarmuka
 │   └── index.html                  # Halaman utama aplikasi
-├── tests/
-│   ├── screenshots/                # Bukti visual hasil pengujian otomatis
-│   ├── test_full_app_e2e.py        # Pengujian antarmuka browser dengan Playwright
-│   └── test_model_accuracy.py      # Pengujian unit akurasi dataset
 ├── requirements.txt
 └── README.md
 ```
