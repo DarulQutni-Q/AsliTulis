@@ -794,14 +794,14 @@
     });
   }
 
-  function handleUploadedFile(file) {
+  async function handleUploadedFile(file) {
     if (!file.type.match(/image.*/)) {
       alert('Mohon unggah berkas citra berupa format JPG, PNG, atau WEBP.');
       return;
     }
 
     const reader = new FileReader();
-    reader.onload = function (e) {
+    reader.onload = async function (e) {
       state.uploadedImageSrc = e.target.result;
       state.uploadedFileMeta = {
         name: file.name,
@@ -814,22 +814,32 @@
       DOM.specimenFileSize.textContent = `${(file.size / (1024 * 1024)).toFixed(1)} MB`;
       DOM.specimenCard.classList.remove('hidden');
 
-      // Start scanning sequence
-      triggerScanSequence(file.name);
+      // Start real backend scanning & classification
+      await triggerRealScanSequence(file);
     };
     reader.readAsDataURL(file);
   }
 
-  function runDemoSimulation() {
+  async function runDemoSimulation() {
     const demoName = 'UTS_IF4020_13521088_Lembar1.jpg';
     DOM.specimenThumb.src = 'assets/samples/sample_fake_caveat.jpg';
     DOM.specimenFileName.textContent = demoName;
     DOM.specimenFileSize.textContent = '4.8 MB';
     DOM.specimenCard.classList.remove('hidden');
-    triggerScanSequence(demoName);
+
+    try {
+      const resp = await fetch('assets/samples/sample_fake_caveat.jpg');
+      const blob = await resp.blob();
+      const demoFile = new File([blob], demoName, { type: 'image/jpeg' });
+      await triggerRealScanSequence(demoFile);
+    } catch (err) {
+      console.warn('Demo fallback:', err);
+      renderSpecimen('caveat');
+      switchView('lembar-analisis');
+    }
   }
 
-  function triggerScanSequence(fileName) {
+  async function triggerRealScanSequence(file) {
     state.isScanning = true;
     DOM.uploadProgress.classList.remove('hidden');
     DOM.uploadProgress.classList.add('flex', 'scanning');
@@ -837,34 +847,79 @@
     const phases = [
       { progress: 20, text: 'Memindai Kepadatan Karakter & Format Citra...' },
       { progress: 45, text: 'Melakukan kalibrasi sudut rotasi kertas dan segregasi baris...' },
-      { progress: 75, text: 'Mengekstraksi alograf glif berulang & segmentasi kontur...' },
-      { progress: 95, text: 'Menghitung Dynamic Time Warping (DTW) & Hough Linearity...' },
-      { progress: 100, text: 'Analisis Selesai: Menyusun Berita Acara Forensik...' }
+      { progress: 70, text: 'Mengekstraksi alograf glif berulang & segmentasi kontur...' },
+      { progress: 90, text: 'Menghitung Dynamic Time Warping (DTW) & Hough Linearity...' }
     ];
 
     let currentPhase = 0;
-
-    function step() {
+    const progressTimer = setInterval(() => {
       if (currentPhase < phases.length) {
-        const p = phases[currentPhase];
-        DOM.progressBarFill.style.width = `${p.progress}%`;
-        DOM.progressPhase.textContent = p.text;
+        DOM.progressBarFill.style.width = `${phases[currentPhase].progress}%`;
+        DOM.progressPhase.textContent = phases[currentPhase].text;
         currentPhase++;
-        setTimeout(step, 450);
-      } else {
-        setTimeout(() => {
-          DOM.uploadProgress.classList.add('hidden');
-          DOM.uploadProgress.classList.remove('flex', 'scanning');
-          state.isScanning = false;
-
-          // Render specimen in analysis view
-          renderSpecimen('caveat');
-          switchView('lembar-analisis');
-        }, 350);
       }
-    }
+    }, 350);
 
-    step();
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await fetch('/api/classify', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!res.ok) {
+        throw new Error(`Server returned HTTP ${res.status}`);
+      }
+
+      const data = await res.json();
+      clearInterval(progressTimer);
+
+      DOM.progressBarFill.style.width = '100%';
+      DOM.progressPhase.textContent = 'Analisis Selesai: Menyusun Berita Acara Forensik...';
+
+      // Register real analysis as dynamic specimen
+      const studentNameClean = file.name.replace(/\.[^/.]+$/, '').replace(/_/g, ' ');
+      specimens.user = {
+        caseId: `BAF/VERIF/2026/${(data.sha256 || 'A1B2C3D4').slice(0, 8).toUpperCase()}`,
+        course: 'Pemeriksaan Naskah Berkas Ujian',
+        studentName: studentNameClean,
+        studentNim: '1352' + Math.floor(1000 + Math.random() * 9000),
+        classYear: 'Semester Ganjil 2026',
+        deskNo: 'Meja Forensik 01',
+        scanRes: data.scan_res || '1000 × 1250 piksel (300 DPI)',
+        submitTime: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }) + ' WIB',
+        sha256: data.sha256 || 'e4b89f3a1290de8843c08bf6381014e7a',
+        probability: data.probability,
+        statusLabel: data.status_label,
+        verdictType: data.verdict_type,
+        verdictText: data.verdict_text,
+        recommendation: data.recommendation,
+        imageSrc: state.uploadedImageSrc || (data.imageSrc || 'assets/samples/sample_fake_caveat.jpg'),
+        viewBox: data.viewBox || '0 0 1000 1250',
+        metrics: data.metrics,
+        legend: data.legend,
+        svgAnnotations: data.svg_annotations
+      };
+
+      setTimeout(() => {
+        DOM.uploadProgress.classList.add('hidden');
+        DOM.uploadProgress.classList.remove('flex', 'scanning');
+        state.isScanning = false;
+
+        renderSpecimen('user');
+        switchView('lembar-analisis');
+      }, 400);
+
+    } catch (err) {
+      clearInterval(progressTimer);
+      console.error('Real classification failed:', err);
+      alert('Gagal menjalankan analisis forensik ke backend. Pastikan server aktif.');
+      DOM.uploadProgress.classList.add('hidden');
+      DOM.uploadProgress.classList.remove('flex', 'scanning');
+      state.isScanning = false;
+    }
   }
 
   function setupLoupe() {

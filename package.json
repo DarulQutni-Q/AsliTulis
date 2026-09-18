@@ -1,0 +1,13 @@
+{
+  "name": "aslitulis",
+  "version": "1.0.0",
+  "description": "Platform Forensik Digital Keaslian Tulisan Tangan (Human vs Font-Generated / Pen-Plotter)",
+  "scripts": {
+    "dev": "./.venv/bin/uvicorn backend.app.main:app --host 0.0.0.0 --port 8000 --reload",
+    "train": "./.venv/bin/python backend/data/train.py",
+    "download-real": "./.venv/bin/python backend/data/download_real_data.py"
+  },
+  "keywords": ["forensic", "handwriting", "classifier", "fastapi", "computer-vision"],
+  "author": "AsliTulis",
+  "license": "MIT"
+}
