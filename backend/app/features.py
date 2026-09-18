@@ -91,7 +91,7 @@ def compute_glyph_cloning(glyphs: List[Dict[str, Any]]) -> Tuple[float, float, L
         cluster_3plus_count: Number of glyphs participating in multi-instance font clusters
     """
     if len(glyphs) < 4:
-        return 0.0, 0.0, [], 0
+        return 0.0, 0.0, [], 0, 0
         
     num_glyphs = len(glyphs)
     cloned_indices = set()
@@ -154,8 +154,11 @@ def compute_glyph_cloning(glyphs: List[Dict[str, Any]]) -> Tuple[float, float, L
     # Sort pairs by highest similarity
     detected_pairs = sorted(detected_pairs, key=lambda x: x["score"], reverse=True)
     
-    # Count how many glyphs belong to multi-occurrence font clusters (clusters of size >= 3)
+    # Count how many glyphs belong to multi-occurrence font clusters
+    # cluster_3plus: clusters of size >= 3 (matches >= 2)
     cluster_3plus_count = sum(1 for i in range(num_glyphs) if len(clone_matches[i]) >= 2)
+    # cluster_5plus: clusters of size >= 5 (matches >= 4)
+    cluster_5plus_count = sum(1 for i in range(num_glyphs) if len(clone_matches[i]) >= 4)
     
     # Keep top non-overlapping representative pairs
     curated_pairs = []
@@ -179,7 +182,7 @@ def compute_glyph_cloning(glyphs: List[Dict[str, Any]]) -> Tuple[float, float, L
                 break
                 
     clone_ratio = len(cloned_indices) / float(num_glyphs) if num_glyphs > 0 else 0.0
-    return clone_ratio, max_sim, curated_pairs, cluster_3plus_count
+    return clone_ratio, max_sim, curated_pairs, cluster_3plus_count, cluster_5plus_count
 
 def compute_stroke_width_variance(text_binary: np.ndarray) -> Tuple[float, float]:
     """
@@ -287,7 +290,7 @@ def extract_forensic_features(img_bgr: np.ndarray) -> Dict[str, Any]:
     glyphs = extract_glyph_candidates(text_binary, max_glyphs=150)
     
     # 1. Cloned glyphs & repetition
-    clone_ratio, max_sim, top_pairs, cluster_3plus_count = compute_glyph_cloning(glyphs)
+    clone_ratio, max_sim, top_pairs, cluster_3plus_count, cluster_5plus_count = compute_glyph_cloning(glyphs)
     
     # 2. Stroke width variation
     mean_sw, stroke_cv = compute_stroke_width_variance(text_binary)
@@ -324,6 +327,7 @@ def extract_forensic_features(img_bgr: np.ndarray) -> Dict[str, Any]:
         "baseline_rigidity": baseline_rigidity,
         "height_cv": height_cv,
         "cluster_3plus_count": cluster_3plus_count,
+        "cluster_5plus_count": cluster_5plus_count,
         "ink_std": ink_std,
         "num_glyphs_analyzed": len(glyphs),
         "top_pairs": top_pairs,

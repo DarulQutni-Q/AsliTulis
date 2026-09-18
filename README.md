@@ -22,14 +22,14 @@ AsliTulis mengekstrak parameter-parameter tersebut dari citra resolusi tinggi, l
 Sistem mengekstrak 7 parameter utama:
 - `max_sim`: Nilai korelasi tertinggi (Normalized Cross Correlation) antar-pasangan glif terpisah. Pada tulisan manusia nilainya berada di bawah 0.925, sedangkan font sintetis mencapai 0.940 hingga 0.995.
 - `clone_ratio`: Proporsi glif pada naskah yang memiliki pasangan kembar dengan korelasi tinggi (NCC >= 0.93).
-- `cluster_3plus_count`: Jumlah kelompok karakter identik yang berulang 3 kali atau lebih lintas baris.
+- `cluster_5plus_count`: Jumlah kelompok karakter identik yang berulang 5 kali atau lebih lintas baris (indikator mutlak cetakan template font).
 - `stroke_cv`: Koefisien variasi ketebalan goresan pena berdasarkan Euclidean Distance Transform sepanjang sumbu skeleton goresan.
 - `baseline_res_std`: Standar deviasi residu penempatan huruf terhadap kurva garis mistar buku bergaris.
 - `height_cv`: Entropi variasi tinggi karakter untuk mengukur fluktuasi biologis tangan manusia.
 - `ink_std`: Standar deviasi nilai warna piksel tinta untuk menilai gradien serapan serat kertas dibanding warna solid rendering komputer.
 
 ### 3. Logika Klasifikasi Dual-Layer
-1. Lapisan Aturan Vektor (Hard Clone Law): Naskah langsung ditandai sintetis apabila ditemukan pengulangan karakter yang secara fisik tidak mungkin dihasilkan motorik manusia (`max_sim >= 0.950`, atau kombinasi `clone_ratio >= 0.035` dan `max_sim >= 0.930`, atau `cluster_3plus_count >= 1`).
+1. Lapisan Aturan Vektor (Hard Clone Law): Naskah langsung ditandai sintetis apabila ditemukan pengulangan karakter yang secara fisik tidak mungkin dihasilkan motorik manusia (`max_sim >= 0.950`, atau kombinasi `clone_ratio >= 0.035` dan `max_sim >= 0.930`, atau bukti klaster kembar masif `cluster_5plus_count >= 1`).
 2. Lapisan Machine Learning: Untuk teks bersambung (kursif) atau teks pendek, model Random Forest mengevaluasi vektor fitur secara multivariat untuk menentukan probabilitas keaslian.
 
 ## Hasil Pengujian dan Benchmark

@@ -82,15 +82,15 @@ def evaluate_image_bytes(contents: bytes, filename: str = "specimen.jpg") -> Dic
 
     clf_bundle = get_classifier()
     model = clf_bundle["model"]
-    cluster_3plus = features.get("cluster_3plus_count", 0)
+    cluster_5plus = features.get("cluster_5plus_count", 0)
     
-    # 1. Direct Forensic Clone Law:
+    # 1. Direct Forensic Clone Law (Strict Multi-Instance Criterion: cluster >= 5 instances):
     # Font generators and mechanical pen-plotters repeat mathematical vector shapes.
-    # If high-confidence cloned allographs or 3+ multi-instance clusters appear, it is definitively synthetic.
+    # If high-confidence cloned allographs or 5+ multi-instance clusters appear, it is definitively synthetic.
     is_hard_clone = (
         (max_sim >= 0.950) or
         (clone_ratio >= 0.035 and max_sim >= 0.930) or
-        (cluster_3plus >= 1 and max_sim >= 0.930)
+        (cluster_5plus >= 1 and max_sim >= 0.930)
     )
     
     # 2. Machine Learning Pipeline (Random Forest trained on multi-feature forensic vector):
@@ -136,20 +136,32 @@ def evaluate_image_bytes(contents: bytes, filename: str = "specimen.jpg") -> Dic
         "baseline": f"{round(baseline_rigidity, 1)}% {'Kaku' if baseline_rigidity > 90 else 'Organik'}"
     }
 
-    # Format dynamic SVG annotations
+    # Format dynamic SVG annotations with comfortable breathable padding
     svg_elements = []
     legend_items = []
+    pad_x = 2
+    pad_y = 3
     
     for i, pair in enumerate(top_pairs):
         pin = pair["pin"]
         b1, b2 = pair["box1"], pair["box2"]
         pair_id = f"glif-{i+1}"
         
+        bx1 = max(0, b1['x'] - pad_x)
+        by1 = max(0, b1['y'] - pad_y)
+        bw1 = b1['w'] + (pad_x * 2)
+        bh1 = b1['h'] + (pad_y * 2)
+        
+        bx2 = max(0, b2['x'] - pad_x)
+        by2 = max(0, b2['y'] - pad_y)
+        bw2 = b2['w'] + (pad_x * 2)
+        bh2 = b2['h'] + (pad_y * 2)
+        
         # SVG rect & pin 1
         svg_elements.append(f'''
         <g class="glyph-group" data-pair="{pair_id}" data-label="{pair['label']}">
-          <rect class="forensic-rect" x="{b1['x']}" y="{b1['y']}" width="{b1['w']}" height="{b1['h']}" rx="2"></rect>
-          <g class="forensic-pin" transform="translate({b1['x'] + b1['w']}, {b1['y']})">
+          <rect class="forensic-rect" x="{bx1}" y="{by1}" width="{bw1}" height="{bh1}" rx="2"></rect>
+          <g class="forensic-pin" transform="translate({bx1 + bw1}, {by1})">
             <circle r="8"></circle>
             <text>{pin}</text>
           </g>
@@ -159,8 +171,8 @@ def evaluate_image_bytes(contents: bytes, filename: str = "specimen.jpg") -> Dic
         # SVG rect & pin 2 (the matching twin)
         svg_elements.append(f'''
         <g class="glyph-group" data-pair="{pair_id}" data-label="Vektor Kembar: Korelasi {pair['score']}% identik">
-          <rect class="forensic-rect" x="{b2['x']}" y="{b2['y']}" width="{b2['w']}" height="{b2['h']}" rx="2"></rect>
-          <g class="forensic-pin" transform="translate({b2['x'] + b2['w']}, {b2['y']})">
+          <rect class="forensic-rect" x="{bx2}" y="{by2}" width="{bw2}" height="{bh2}" rx="2"></rect>
+          <g class="forensic-pin" transform="translate({bx2 + bw2}, {by2})">
             <circle r="8"></circle>
             <text>{pin}</text>
           </g>

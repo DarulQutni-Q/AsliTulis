@@ -318,18 +318,18 @@ button, input, select, textarea, .card, .badge, .panel, .tag {
 
 /* Subtle, Elegant Forensic Bounding Rectangles */
 .forensic-rect {
-  fill: rgba(255, 218, 213, 0.35);
+  fill: rgba(255, 218, 213, 0.40);
   stroke: var(--secondary);
-  stroke-width: 1.5;
-  stroke-dasharray: 4, 3;
+  stroke-width: 1.8;
+  stroke-dasharray: 5, 2.5;
   cursor: pointer;
   transition: fill 0.15s ease, stroke-width 0.15s ease;
 }
 
 .forensic-rect:hover, .forensic-rect.active-glyph {
-  fill: rgba(255, 218, 213, 0.75);
+  fill: rgba(255, 218, 213, 0.80);
   stroke-dasharray: none;
-  stroke-width: 2.2;
+  stroke-width: 2.4;
 }
 
 .forensic-rect.rect-authentic {
