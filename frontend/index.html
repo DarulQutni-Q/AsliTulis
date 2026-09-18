@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AsliTulis — Konsol Forensik Keaslian Tulisan Tangan</title>
+  
+  <!-- Typography & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""/>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;0,8..60,700;1,8..60,400&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+
+  <!-- Tailwind CSS with Stitch Design System Tokens -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            'surface': '#FCF9EF',
+            'surface-bright': '#FCF9EF',
+            'surface-dim': '#DCDAD0',
+            'surface-container-lowest': '#FFFFFF',
+            'surface-container-low': '#F6F4EA',
+            'surface-container': '#F0EEE4',
+            'surface-container-high': '#EAE8DE',
+            'surface-container-highest': '#E5E3D9',
+            'primary': '#0B1E3A',
+            'primary-container': '#223350',
+            'on-primary': '#FFFFFF',
+            'on-primary-container': '#8B9CBE',
+            'secondary': '#B23A2E',
+            'secondary-deep': '#8C291F',
+            'secondary-fixed': '#FFDAD5',
+            'secondary-fixed-dim': '#FFB4A9',
+            'on-secondary-fixed-variant': '#891C15',
+            'tertiary': '#002316',
+            'tertiary-container': '#16392B',
+            'tertiary-fixed': '#C5EBD6',
+            'tertiary-fixed-dim': '#A9CFBB',
+            'on-tertiary-container': '#7EA390',
+            'outline': '#75777E',
+            'outline-variant': '#CBD4DC',
+            'on-surface': '#1B1C16',
+            'on-surface-variant': '#44474D',
+            'inverse-surface': '#30312A'
+          },
+          fontFamily: {
+            'display': ['"Source Serif 4"', 'Georgia', 'serif'],
+            'headline-lg': ['"Source Serif 4"', 'Georgia', 'serif'],
+            'headline-md': ['"Source Serif 4"', 'Georgia', 'serif'],
+            'headline-sm': ['"Source Serif 4"', 'Georgia', 'serif'],
+            'body-lg': ['Work Sans', 'sans-serif'],
+            'body-md': ['Work Sans', 'sans-serif'],
+            'body-sm': ['Work Sans', 'sans-serif'],
+            'label-md': ['Work Sans', 'sans-serif'],
+            'label-sm': ['Work Sans', 'sans-serif'],
+            'mono-metric': ['Work Sans', 'monospace']
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- Core Performance Stylesheet -->
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+
+<body class="bg-surface font-body-md text-on-surface antialiased min-h-screen flex flex-col">
+
+  <!-- ==================== COMPACT HEADER ==================== -->
+  <header class="app-header">
+    <div class="flex items-center gap-6">
+      <div class="flex items-center gap-3 cursor-pointer" data-nav="pemeriksaan-berkas">
+        <img alt="AsliTulis Logo" class="h-8 w-auto object-contain" src="assets/logo.svg"/>
+        <div class="h-5 w-px bg-outline-variant"></div>
+        <div class="flex flex-col">
+          <span class="font-display text-base text-primary leading-none font-bold">AsliTulis</span>
+          <span class="font-mono-metric text-[9px] text-on-surface-variant tracking-wider uppercase mt-0.5">Forensik Tulisan Tangan</span>
+        </div>
+      </div>
+
+      <div class="hidden lg:flex items-center gap-2 pl-4 border-l border-outline-variant">
+        <span class="font-mono-metric text-[9px] px-1.5 py-0.5 bg-surface-container border border-outline-variant text-primary uppercase tracking-wider font-semibold">LAB ENGINE V1.0</span>
+        <span class="font-mono-metric text-[10px] text-on-surface-variant uppercase tracking-wider">43 Model Alograf Siap</span>
+      </div>
+    </div>
+
+    <!-- Main Navigation Tabs (Buttons, No Jumpy #Hashes) -->
+    <nav class="flex items-center gap-2 h-full">
+      <button type="button" class="nav-link active" data-view="pemeriksaan-berkas">Pemeriksaan Berkas</button>
+      <button type="button" class="nav-link" data-view="lembar-analisis">Lembar Analisis</button>
+      <button type="button" class="nav-link" data-view="arsip-pengujian">Buku Catatan Arsip</button>
+    </nav>
+
+    <!-- Evaluator Profile / Session Manager (Clean Institutional Aesthetic, No Gimmick Dots) -->
+    <div class="flex items-center gap-2.5">
+      <button type="button" class="flex items-center gap-2 border border-outline-variant px-3 py-1 bg-surface-container-low text-xs cursor-pointer hover:bg-surface-container transition-colors select-none text-left" id="btn-open-examiner-modal" title="Klik untuk mengubah profil petugas pemeriksa">
+        <span class="material-symbols-outlined text-[16px] text-primary">account_circle</span>
+        <div class="flex flex-col">
+          <span class="font-mono-metric text-[11px] text-primary font-bold leading-tight" id="header-examiner-name">Mode Tamu / Lab Mandiri</span>
+          <span class="font-mono-metric text-[9px] text-on-surface-variant leading-tight" id="header-examiner-role">Sesi #AT-8812 • Atur Identitas</span>
+        </div>
+      </button>
+    </div>
+  </header>
+
+  <!-- ==================== MAIN CONTENT ==================== -->
+  <main class="main-content">
+
+    <!-- =========================================================================
+         VIEW 1: PEMERIKSAAN BERKAS (LAYOUT A: MEJA PERIKSA)
+         ========================================================================= -->
+    <section id="view-pemeriksaan-berkas" class="view-section active w-full px-6 md:px-12 py-6 flex flex-col gap-6">
+      
+      <!-- Context Strip & Mode Switcher -->
+      <div class="w-full flex flex-col lg:flex-row lg:items-end justify-between gap-4 border-b border-outline-variant pb-4">
+        <div>
+          <span class="font-mono-metric text-[11px] text-on-surface-variant uppercase tracking-wider">ARSIP LABORATORIUM FORENSIK KOMPUTASI • RUANG UJI 04</span>
+          <h1 class="font-display text-2xl md:text-3xl text-primary mt-0.5">Meja Periksa Naskah Ujian</h1>
+          <p class="font-body-md text-on-surface-variant text-xs md:text-sm mt-1 max-w-2xl">
+            Verifikasi keaslian naskah tugas tulis tangan mahasiswa terhadap manipulasi generator font sintetis dan eksekusi pena robot (pen-plotter AI).
+          </p>
+        </div>
+
+        <div class="flex items-center bg-surface-container p-1 border border-outline-variant self-start lg:self-auto">
+          <button class="px-3 py-1 font-mono-metric text-xs bg-surface-container-lowest text-primary shadow-sm font-semibold transition-all" id="mode-single" type="button">
+            Mode Spot-Check Tunggal
+          </button>
+          <button class="px-3 py-1 font-mono-metric text-xs text-on-surface-variant hover:text-on-surface transition-all" id="mode-batch" type="button">
+            Pemeriksaan Paralel (hingga 30 lembar)
+          </button>
+        </div>
+      </div>
+
+      <!-- Metadata Parameters -->
+      <div class="w-full bg-surface-container-low border border-outline-variant p-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="flex flex-col">
+            <label class="font-mono-metric text-[10px] text-on-surface-variant mb-1" for="course-code">MATA KULIAH / KELAS UJIAN</label>
+            <input class="w-full bg-transparent border-b border-outline text-primary text-xs py-1 focus:outline-none focus:border-primary transition-colors" id="course-code" type="text" value="IF-4020 Teori Komputasi Lanjut (K-01)"/>
+          </div>
+
+          <div class="flex flex-col">
+            <label class="font-mono-metric text-[10px] text-on-surface-variant mb-1" for="exam-type">TIPE BERKAS PENGUJIAN</label>
+            <select class="w-full bg-transparent border-b border-outline text-primary text-xs py-1 focus:outline-none focus:border-primary cursor-pointer" id="exam-type">
+              <option value="uts">Ujian Tengah Semester (Kertas Bergaris)</option>
+              <option value="mandiri">Esai Tangan Mandiri (Kertas Polos Folio)</option>
+              <option value="laporan">Laporan Praktikum Laboratorium</option>
+            </select>
+          </div>
+
+          <div class="flex flex-col">
+            <label class="font-mono-metric text-[10px] text-on-surface-variant mb-1" for="sensitivity-level">SENSITIVITAS DETEKSI GLIF</label>
+            <select class="w-full bg-transparent border-b border-outline text-primary text-xs py-1 focus:outline-none focus:border-primary cursor-pointer" id="sensitivity-level">
+              <option value="standard" selected>Standar Akademik (Toleransi Ragam Wajar Siswa)</option>
+              <option value="tight">Forensik Ketat (Analisis Tekanan Mikroskopik & Kerning)</option>
+              <option value="exploratory">Cepat (Inspeksi Keseragaman Baseline Global)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Drop Zone Area with Laser Scanner -->
+      <div class="w-full bg-surface-container p-4 border border-outline-variant relative">
+        <div class="drop-zone" id="drop-zone">
+          <div class="ruled-lines-bg"></div>
+
+          <div class="absolute top-3 left-4 hidden sm:flex items-center pointer-events-none">
+            <span class="font-mono-metric text-[10px] text-on-surface-variant border border-outline-variant px-2 py-0.5 bg-surface-container-low">FORM-AT-09</span>
+          </div>
+          <div class="absolute top-3 right-4 hidden sm:flex items-center pointer-events-none">
+            <span class="font-mono-metric text-[10px] text-on-surface-variant border border-outline-variant px-2 py-0.5 bg-surface-container-low">RESOLUSI OPTIMAL: ≥300 DPI</span>
+          </div>
+
+          <div class="relative z-10 flex flex-col items-center max-w-lg">
+            <div class="w-14 h-14 bg-surface-container-high border border-outline-variant flex items-center justify-center mb-3">
+              <span class="material-symbols-outlined text-primary text-[28px]">history_edu</span>
+            </div>
+            <p class="font-display text-xl md:text-2xl text-primary mb-1">
+              Unggah atau seret foto tulisan tangan mahasiswa ke sini
+            </p>
+            <p class="font-body-sm text-xs text-on-surface-variant mb-5 max-w-sm">
+              Mendukung foto format JPG, PNG, atau pindaian kamera smartphone resolusi tinggi.
+            </p>
+
+            <div class="flex flex-wrap items-center justify-center gap-3">
+              <label class="px-5 py-2 bg-primary text-white border border-primary font-mono-metric text-xs cursor-pointer hover:bg-primary-container transition-colors shadow-sm">
+                Pilih Foto dari Perangkat
+                <input accept=".jpg,.jpeg,.png,.webp" class="hidden" id="file-input" type="file"/>
+              </label>
+              
+              <button class="px-5 py-2 bg-surface-container-low text-primary border border-outline-variant font-mono-metric text-xs hover:bg-surface-container-high transition-colors font-medium" id="btn-demo" type="button">
+                Gunakan Contoh Tugas Ujian (Demo Sample)
+              </button>
+            </div>
+
+            <span class="font-mono-metric text-[10px] text-on-surface-variant mt-4">
+              Sistem mengekstrak variasi kurvatura glif berulang, linearitas baseline, dan profil ketebalan tinta.
+            </span>
+          </div>
+
+          <!-- Scanning Laser Simulation -->
+          <div class="scan-beam-overlay" id="upload-progress">
+            <div class="laser-line"></div>
+            <div class="w-full max-w-md flex flex-col items-center gap-2 z-20">
+              <div class="w-9 h-9 border-2 border-primary border-t-transparent animate-spin"></div>
+              <span class="font-display text-base text-primary mt-2 font-semibold">Memindai Densitas Karakter...</span>
+              <span class="font-mono-metric text-xs text-on-surface-variant text-center" id="progress-phase">
+                Melakukan kalibrasi sudut rotasi kertas dan segregasi baris
+              </span>
+              <div class="w-full bg-surface-container-high h-1.5 mt-2 overflow-hidden">
+                <div class="bg-primary h-full w-0 transition-all duration-300" id="progress-bar-fill"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Specimen Preview Bar (Hidden initially) -->
+        <div class="hidden mt-4 bg-surface-container-lowest border border-outline-variant p-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3" id="specimen-card">
+          <div class="flex items-center gap-3">
+            <div class="w-14 h-16 bg-surface-container-high border border-outline-variant overflow-hidden shrink-0">
+              <img class="w-full h-full object-cover" id="specimen-thumb" src="assets/samples/sample_fake_caveat.jpg" alt="Specimen Thumbnail"/>
+            </div>
+            <div class="flex flex-col">
+              <div class="flex items-center gap-2">
+                <span class="font-mono-metric text-xs text-primary font-bold" id="specimen-file-name">UTS_IF4020_13521088_Lembar1.jpg</span>
+                <span class="font-mono-metric text-[10px] px-1.5 py-0.2 bg-surface-container text-on-surface-variant border border-outline-variant" id="specimen-file-size">4.8 MB</span>
+              </div>
+              <span class="font-body-sm text-xs text-on-surface-variant mt-0.5" id="specimen-file-meta">Mahasiswa: Ahmad Fauzan • NIM: 13521088 • 842 Glif Terpetakan</span>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+            <button class="px-3 py-1.5 font-mono-metric text-xs border border-outline-variant text-on-surface-variant hover:text-on-surface" id="btn-cancel-specimen" type="button">
+              Ganti Berkas
+            </button>
+            <button class="px-4 py-1.5 font-mono-metric text-xs bg-primary text-white border border-primary hover:bg-primary-container font-semibold" id="btn-run-full-analysis" type="button">
+              Buka Lembar Analisis &rarr;
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Protokol Deteksi -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-0 border border-outline-variant bg-surface-container-low divide-y md:divide-y-0 md:divide-x divide-outline-variant">
+        <div class="p-4 flex flex-col">
+          <div class="flex items-center gap-2 mb-2 text-primary">
+            <span class="material-symbols-outlined text-[18px]">font_download</span>
+            <h3 class="font-display text-sm font-semibold">Pola Keragaman Glif (Glyph Variance)</h3>
+          </div>
+          <p class="font-body-sm text-xs text-on-surface-variant leading-relaxed">
+            Mendeteksi apakah pengulangan huruf yang identik (alograf ‘a’, ‘e’, ‘k’) memiliki variasi sudut dan tekanan pena mikro alami, atau identik sempurna seperti font digital / plotter.
+          </p>
+          <div class="mt-auto pt-3 border-t border-outline-variant flex items-center justify-between">
+            <span class="font-mono-metric text-[10px] text-on-surface-variant">METRIK</span>
+            <span class="font-mono-metric text-[10px] text-primary">Dynamic Time Warping (DTW)</span>
+          </div>
+        </div>
+
+        <div class="p-4 flex flex-col">
+          <div class="flex items-center gap-2 mb-2 text-primary">
+            <span class="material-symbols-outlined text-[18px]">reorder</span>
+            <h3 class="font-display text-sm font-semibold">Fluktuasi Baseline & Spasi</h3>
+          </div>
+          <p class="font-body-sm text-xs text-on-surface-variant leading-relaxed">
+            Memeriksa konsistensi tarikan kalimat terhadap garis buku. Tangan biologis mengalami keletihan motorik alami, sedangkan plotter AI mempertahankan linearitas kaku tanpa deviasi.
+          </p>
+          <div class="mt-auto pt-3 border-t border-outline-variant flex items-center justify-between">
+            <span class="font-mono-metric text-[10px] text-on-surface-variant">METRIK</span>
+            <span class="font-mono-metric text-[10px] text-primary">Hough Transform Linearity</span>
+          </div>
+        </div>
+
+        <div class="p-4 flex flex-col">
+          <div class="flex items-center gap-2 mb-2 text-primary">
+            <span class="material-symbols-outlined text-[18px]">draw</span>
+            <h3 class="font-display text-sm font-semibold">Dinamika Tinta & Ketebalan</h3>
+          </div>
+          <p class="font-body-sm text-xs text-on-surface-variant leading-relaxed">
+            Menganalisis saturasi pigmen di titik henti pena, penekanan awal (landing points), dan absorpsi serat kertas. Plotter menghasilkan ketebalan garis konstan dengan ujung tumpul tak natural.
+          </p>
+          <div class="mt-auto pt-3 border-t border-outline-variant flex items-center justify-between">
+            <span class="font-mono-metric text-[10px] text-on-surface-variant">METRIK</span>
+            <span class="font-mono-metric text-[10px] text-primary">Gradient Density Profile</span>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+
+    <!-- =========================================================================
+         VIEW 2: LEMBAR ANALISIS (LAYOUT B: ANOTASI FORENSIK DENGAN FOTO ASLI)
+         ========================================================================= -->
+    <section id="view-lembar-analisis" class="view-section w-full">
+      
+      <!-- Sub-Header Status Strip (Immediately below header, Zero Empty Whitespace) -->
+      <div class="w-full bg-surface-container px-6 md:px-12 py-2 flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant">
+        <div class="flex items-center gap-4">
+          <div class="flex items-center gap-1.5">
+            <span class="font-mono-metric text-xs text-on-surface-variant">Berkas:</span>
+            <span class="font-mono-metric text-xs text-primary font-bold" id="stat-case-id">BAF/KOMP/2024/X-1088</span>
+          </div>
+          <div class="hidden md:flex items-center gap-1.5">
+            <span class="font-mono-metric text-xs text-on-surface-variant">Mata Kuliah:</span>
+            <span class="font-body-sm text-xs text-on-surface" id="stat-course">IF-4020 Teori Komputasi Lanjut</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="font-mono-metric text-xs text-on-surface-variant">Status:</span>
+            <span class="font-mono-metric text-[11px] px-2 py-0.5 bg-secondary-fixed text-on-secondary-fixed-variant font-bold" id="stat-status-badge">Tinjauan Lanjutan Diperlukan</span>
+          </div>
+        </div>
+
+        <!-- Interactive Toolbar -->
+        <div class="flex items-center gap-2">
+          <button class="px-2.5 py-1 bg-surface-container-high hover:bg-surface-container-highest text-primary font-mono-metric text-xs flex items-center gap-1 transition-colors border border-outline-variant" id="btn-toggle-ruler" type="button">
+            <span class="material-symbols-outlined text-[15px]">straighten</span>
+            <span id="label-toggle-ruler">Sembunyikan Kisi Garis</span>
+          </button>
+          
+          <button class="px-2.5 py-1 bg-primary text-white hover:bg-primary-container font-mono-metric text-xs flex items-center gap-1 transition-colors border border-primary" id="btn-toggle-annotations" type="button">
+            <span class="material-symbols-outlined text-[15px]">layers</span>
+            <span id="label-toggle-annotations">Anotasi Forensik: Aktif</span>
+          </button>
+
+          <button class="px-2.5 py-1 bg-surface-container-high hover:bg-surface-container-highest text-primary font-mono-metric text-xs flex items-center gap-1 transition-colors border border-outline-variant" id="btn-toggle-loupe" type="button">
+            <span class="material-symbols-outlined text-[15px]">zoom_in</span>
+            <span id="label-toggle-loupe">Kaca Pembesar (2.5x)</span>
+          </button>
+
+          <button class="px-2.5 py-1 bg-surface-container-high hover:bg-surface-container-highest text-primary font-mono-metric text-xs flex items-center gap-1 transition-colors border border-outline-variant font-medium" id="btn-open-methods-modal" type="button" title="Lihat penjelasan 5 metode pembeda tulisan asli vs fake font">
+            <span class="material-symbols-outlined text-[15px]">science</span>
+            <span>5 Metode Forensik</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Main Inspection Desk: 65% Real Document Canvas / 35% Sidebar -->
+      <div class="w-full px-6 md:px-12 py-3">
+        <div class="w-full grid grid-cols-1 xl:grid-cols-12 gap-5 items-start">
+          
+          <!-- 65% Main Canvas Viewport (Left) -->
+          <div class="xl:col-span-8 flex flex-col gap-3">
+            
+            <!-- Document Meta Strip & Specimen Switcher -->
+            <div class="bg-surface-container-low p-3 flex flex-wrap items-center justify-between gap-2 border border-outline-variant shadow-sm">
+              <div>
+                <h2 class="font-display text-base text-primary font-semibold" id="exam-doc-title">Pindaian Lembar Jawaban Ujian Asli</h2>
+                <p class="font-mono-metric text-[11px] text-on-surface-variant" id="exam-student-header">
+                  Mahasiswa: <strong>Ahmad Fauzan</strong> • NIM: <strong>13521088</strong> • Resolusi: 1006 × 1245 px
+                </p>
+              </div>
+              <div class="flex items-center gap-2">
+                <!-- Quick Specimen Photo Switcher (All 3 are Synthetic Font Samples with identical repeating glyph sizes) -->
+                <div class="flex items-center border border-outline-variant bg-surface p-0.5">
+                  <button type="button" class="px-2 py-0.5 font-mono-metric text-[10px] bg-primary text-white font-semibold transition-colors btn-specimen-choice" data-specimen="caveat" title="Uji Font Caveat (Kursif/Sambung)">Caveat (Plotter Kursif)</button>
+                  <button type="button" class="px-2 py-0.5 font-mono-metric text-[10px] text-on-surface-variant hover:text-primary transition-colors btn-specimen-choice" data-specimen="dekko" title="Uji Font Dekko (Kasual/Tegak)">Dekko (Plotter Kasual)</button>
+                  <button type="button" class="px-2 py-0.5 font-mono-metric text-[10px] text-on-surface-variant hover:text-primary transition-colors btn-specimen-choice" data-specimen="mali" title="Uji Font Mali (Rapi/Sekolah)">Mali (Plotter Rapi)</button>
+                </div>
+                <span class="font-mono-metric text-[10px] px-2 py-0.5 bg-secondary-fixed text-on-secondary-fixed-variant font-bold border border-secondary/30" id="doc-verdict-pill">TERINDIKASI FONT</span>
+              </div>
+            </div>
+
+            <!-- Specimen Photo Frame Viewport (REAL HANDWRITTEN IMAGE) -->
+            <div class="specimen-viewport-wrapper">
+              <div class="specimen-canvas-container" id="specimen-canvas-container">
+                
+                <!-- Frame holding the real photo and its overlaid SVG forensic annotations -->
+                <div class="specimen-image-frame" id="specimen-frame">
+                  <!-- The Actual High-Res Handwritten Document Photo -->
+                  <img id="main-specimen-img" src="assets/samples/sample_fake_caveat.jpg" alt="Pindaian Naskah Tulisan Tangan Asli"/>
+
+                  <!-- Ruled Measurement Grid Overlay -->
+                  <div class="ruler-grid-overlay" id="ruler-grid-overlay"></div>
+
+                  <!-- SVG Layer for Hairline Non-Colliding Forensic Highlights -->
+                  <svg id="forensic-svg-overlay" class="specimen-svg-overlay" viewBox="0 0 1006 1245" preserveAspectRatio="none">
+                    <!-- Cloned Glyph Set 1: "interaksi" on line 1 -->
+                    <g class="glyph-group" data-pair="glif-1" data-label="Glif Identik 'interaksi' • Korelasi DTW 99.8% (TTF Plotter)">
+                      <rect class="forensic-rect" x="294" y="295" width="144" height="35" rx="1"></rect>
+                      <g class="forensic-pin" transform="translate(438, 295)">
+                        <circle r="8"></circle>
+                        <text>①</text>
+                      </g>
+                    </g>
+
+                    <!-- Cloned Glyph Set 1 Match on line 2: "ikatan" -->
+                    <g class="glyph-group" data-pair="glif-1" data-label="Vektor Kembar: Alograf 'k', 'a', 't' Berulang Identik 99.8%">
+                      <rect class="forensic-rect" x="195" y="342" width="65" height="32" rx="1"></rect>
+                      <g class="forensic-pin" transform="translate(260, 342)">
+                        <circle r="8"></circle>
+                        <text>①</text>
+                      </g>
+                    </g>
+
+                    <!-- Cloned Glyph Set 2: "ditentukan" on line 1 -->
+                    <g class="glyph-group" data-pair="glif-2" data-label="Glif Identik 'ditentukan' • Kemiringan Aksis Konstan 0.0°">
+                      <rect class="forensic-rect" x="828" y="297" width="96" height="35" rx="1"></rect>
+                      <g class="forensic-pin" transform="translate(924, 297)">
+                        <circle r="8"></circle>
+                        <text>②</text>
+                      </g>
+                    </g>
+
+                    <!-- Baseline Caliper Line (Fine Hairline) -->
+                    <g class="glyph-group" data-pair="glif-3" data-label="Baseline Mekanis Plotter • Hough Deviasi 0.04% (Kaku)">
+                      <line x1="185" y1="330" x2="925" y2="330" stroke="#B23A2E" stroke-width="1.5" stroke-dasharray="6, 4" opacity="0.85"/>
+                      <g class="forensic-pin" transform="translate(928, 330)">
+                        <circle r="8"></circle>
+                        <text>③</text>
+                      </g>
+                    </g>
+                  </svg>
+                </div>
+
+                <!-- Floating Forensic Tooltip (Appears at cursor over annotations) -->
+                <div class="forensic-floating-tooltip" id="floating-tooltip"></div>
+              </div>
+
+              <!-- Interactive Forensic Legend Tray (Neat & Non-Colliding) -->
+              <div class="bg-surface-container-low border-t border-outline-variant p-3 flex flex-wrap items-center justify-between gap-2 text-xs">
+                <div class="flex items-center gap-3">
+                  <div class="flex items-center gap-1.5 cursor-pointer glyph-legend-btn" data-pair="glif-1">
+                    <span class="w-4 h-4 bg-secondary text-white font-mono-metric text-[10px] flex items-center justify-center font-bold">①</span>
+                    <span class="font-mono-metric text-[11px] text-primary">Korelasi Glif 'a/k': <strong>99.8%</strong></span>
+                  </div>
+                  <div class="flex items-center gap-1.5 cursor-pointer glyph-legend-btn" data-pair="glif-2">
+                    <span class="w-4 h-4 bg-secondary text-white font-mono-metric text-[10px] flex items-center justify-center font-bold">②</span>
+                    <span class="font-mono-metric text-[11px] text-primary">Sudut Kemiringan: <strong>0.0°</strong></span>
+                  </div>
+                  <div class="flex items-center gap-1.5 cursor-pointer glyph-legend-btn" data-pair="glif-3">
+                    <span class="w-4 h-4 bg-secondary text-white font-mono-metric text-[10px] flex items-center justify-center font-bold">③</span>
+                    <span class="font-mono-metric text-[11px] text-primary">Jitter Baseline: <strong>±0.04%</strong></span>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-2 font-mono-metric text-[10px] text-on-surface-variant">
+                  <span class="material-symbols-outlined text-[14px]">info</span>
+                  <span>Arahkan kursor ke kotak anotasi untuk memeriksa parameter glif</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Micro-Contour Glyph Comparison Inset -->
+            <div class="p-3 bg-surface-container-low border border-outline-variant flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-white border border-outline-variant flex items-center justify-center font-display text-2xl text-primary font-bold shadow-xs">
+                  a
+                </div>
+                <div class="w-12 h-12 bg-white border border-secondary flex items-center justify-center font-display text-2xl text-secondary font-bold shadow-xs">
+                  a
+                </div>
+                <div>
+                  <p class="font-mono-metric text-xs text-primary font-semibold">Perbandingan Kontur Glif Karakter "a"</p>
+                  <p class="font-body-sm text-[11px] text-on-surface-variant">Spesimen Kata 1 vs Spesimen Kata 2 (Font Caveat)</p>
+                </div>
+              </div>
+              <div class="text-right shrink-0">
+                <span class="px-3 py-1 bg-secondary text-white font-mono-metric text-xs font-bold">KORELASI VEKTOR: 0.998</span>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- 35% Forensic Verdict & Parameters Sidebar (Right) -->
+          <aside class="xl:col-span-4 flex flex-col gap-3">
+            
+            <!-- Verdict Score Card -->
+            <div class="bg-surface-container-low p-4 border border-outline-variant shadow-sm">
+              <div class="flex justify-between items-start pb-2 border-b border-outline-variant">
+                <div>
+                  <span class="font-mono-metric text-[10px] text-on-surface-variant">INDIKATOR KEASLIAN NASKAH</span>
+                  <h3 class="font-display text-base text-primary mt-0.5">Kesimpulan Audit Forensik</h3>
+                </div>
+                <span class="px-2 py-0.5 bg-secondary-fixed text-on-secondary-fixed-variant font-mono-metric text-xs font-bold" id="risk-badge">
+                  RISIKO TINGGI
+                </span>
+              </div>
+
+              <div class="py-3 flex items-baseline justify-between">
+                <div class="flex flex-col">
+                  <span class="font-mono-metric text-xs text-secondary font-semibold">Probabilitas Font / Plotter</span>
+                  <span class="font-display text-4xl text-secondary leading-none mt-1 font-bold" id="prob-number">89%</span>
+                </div>
+                <div class="text-right">
+                  <span class="font-mono-metric text-[10px] text-on-surface-variant">Toleransi Akademik</span>
+                  <p class="font-mono-metric text-xs text-on-surface mt-0.5">≤ 15% Disyaratkan</p>
+                </div>
+              </div>
+
+              <div class="metric-bar-bg mb-2">
+                <div class="metric-bar-fill bg-secondary" id="prob-bar" data-target-width="89%"></div>
+              </div>
+
+              <p class="font-body-sm text-xs font-medium leading-relaxed" id="prob-recommendation" style="color: var(--secondary);">
+                Disarankan: Verifikasi tulisan langsung secara tatap muka dengan pengawas ruang ujian.
+              </p>
+            </div>
+
+            <!-- Parameters Breakdown -->
+            <div class="bg-surface-container-low p-4 border border-outline-variant shadow-sm">
+              <h4 class="font-display text-sm text-primary pb-2 border-b border-outline-variant font-semibold">
+                Parameter Evaluasi Forensik
+              </h4>
+              
+              <div class="divide-y divide-outline-variant font-body-sm text-xs" id="metric-list">
+                <div class="py-2 flex items-center justify-between">
+                  <div>
+                    <span class="font-mono-metric text-xs text-primary font-medium">Entropi Glif (Variasi Bentuk)</span>
+                    <p class="text-on-surface-variant text-[10px]">Perbedaan kurvatura huruf berulang</p>
+                  </div>
+                  <span class="font-mono-metric text-xs text-secondary font-bold shrink-0" id="val-entropy">12% (Rendah)</span>
+                </div>
+
+                <div class="py-2 flex items-center justify-between">
+                  <div>
+                    <span class="font-mono-metric text-xs text-primary font-medium">Variasi Tekanan Tinta</span>
+                    <p class="text-on-surface-variant text-[10px]">Gradien resapan pigmen pada serat</p>
+                  </div>
+                  <span class="font-mono-metric text-xs text-secondary font-bold shrink-0" id="val-pressure">Monoton</span>
+                </div>
+
+                <div class="py-2 flex items-center justify-between">
+                  <div>
+                    <span class="font-mono-metric text-xs text-primary font-medium">Linearitas Garis Dasar (Baseline)</span>
+                    <p class="text-on-surface-variant text-[10px]">Kelurusan garis terhadap mistar</p>
+                  </div>
+                  <span class="font-mono-metric text-xs text-secondary font-bold shrink-0" id="val-baseline">99.4% Kaku</span>
+                </div>
+
+                <div class="py-2 flex items-center justify-between">
+                  <div>
+                    <span class="font-mono-metric text-xs text-primary font-medium">Kemiringan Sudut (Slant)</span>
+                    <p class="text-on-surface-variant text-[10px]">Fluktuasi sudut aksis karakter</p>
+                  </div>
+                  <span class="font-mono-metric text-xs text-on-surface font-semibold shrink-0" id="val-slant">± 0.4° Tetap</span>
+                </div>
+
+                <div class="py-2 flex items-center justify-between">
+                  <div>
+                    <span class="font-mono-metric text-xs text-primary font-medium">Pen-Lift & Landing Point</span>
+                    <p class="text-on-surface-variant text-[10px]">Titik henti dan awal goresan</p>
+                  </div>
+                  <span class="font-mono-metric text-xs text-secondary font-bold shrink-0" id="val-penlifts">Absen</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- File Metadata -->
+            <div class="bg-surface-container-low p-4 border border-outline-variant shadow-sm">
+              <h4 class="font-display text-sm text-primary pb-2 border-b border-outline-variant font-semibold">
+                Metadata Pindaian Berkas
+              </h4>
+              <div class="mt-2 space-y-1.5 font-mono-metric text-xs">
+                <div class="flex justify-between">
+                  <span class="text-on-surface-variant text-[11px]">Nama Mahasiswa</span>
+                  <span class="text-primary font-bold" id="meta-student-name">Ahmad Fauzan</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-on-surface-variant text-[11px]">Nomor Induk (NIM)</span>
+                  <span class="text-primary" id="meta-student-nim">13521088</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-on-surface-variant text-[11px]">Kelas / Semester</span>
+                  <span class="text-primary" id="meta-class">IF-4020 / Ganjil 2024</span>
+                </div>
+                <div class="flex justify-between items-center">
+                  <span class="text-on-surface-variant text-[11px]">Checksum SHA-256</span>
+                  <span class="text-[10px] text-on-surface-variant truncate max-w-[130px]" id="meta-hash">e4b89f3a1290de8843c08bf6381014e7a</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="bg-surface-container-high p-3 flex flex-col gap-2 border border-outline-variant shadow-sm">
+              <button class="w-full py-2 px-3 bg-primary hover:bg-primary-container text-white font-mono-metric text-xs flex items-center justify-center gap-2 transition-colors shadow-sm" id="btn-print-report" type="button">
+                <span class="material-symbols-outlined text-[16px]">description</span>
+                <span>Cetak Berita Acara Forensik (PDF Resmi)</span>
+              </button>
+              
+              <button class="w-full py-1.5 px-3 bg-surface hover:bg-surface-container-highest text-primary font-mono-metric text-xs flex items-center justify-center gap-1.5 transition-colors border border-outline-variant" type="button" onclick="alert('Notifikasi hasil audit forensik telah diteruskan ke dekanat dan mahasiswa.')">
+                <span class="material-symbols-outlined text-[16px]">mail</span>
+                <span>Kirim Notifikasi Verifikasi</span>
+              </button>
+            </div>
+
+          </aside>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- =========================================================================
+         VIEW 3: ARSIP PENGUJIAN (BUKU CATATAN & HISTORI AUDIT)
+         ========================================================================= -->
+    <section id="view-arsip-pengujian" class="view-section w-full px-6 md:px-12 py-6 flex flex-col gap-5">
+      
+      <div class="border-b border-outline-variant pb-3">
+        <h1 class="font-display text-2xl md:text-3xl text-primary">Buku Catatan Arsip Pengujian</h1>
+        <p class="font-body-md text-xs text-on-surface-variant mt-1">
+          Pangkalan data riwayat inspeksi naskah mahasiswa semester ganjil 2024/2025.
+        </p>
+      </div>
+
+      <!-- Overview Cards -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="p-3 bg-surface-container-low border border-outline-variant">
+          <span class="font-mono-metric text-[10px] text-on-surface-variant">TOTAL LEMBAR TERCATAT</span>
+          <p class="font-display text-2xl text-primary font-bold mt-0.5">42</p>
+        </div>
+        <div class="p-3 bg-secondary-fixed/40 border border-secondary/20">
+          <span class="font-mono-metric text-[10px] text-secondary font-semibold">TERINDIKASI AI / PLOTTER</span>
+          <p class="font-display text-2xl text-secondary font-bold mt-0.5">8</p>
+        </div>
+        <div class="p-3 bg-tertiary-fixed/40 border border-tertiary/20">
+          <span class="font-mono-metric text-[10px] text-tertiary font-semibold">LOLOS VERIFIKASI (OTENTIK)</span>
+          <p class="font-display text-2xl text-tertiary font-bold mt-0.5">34</p>
+        </div>
+        <div class="p-3 bg-surface-container-low border border-outline-variant">
+          <span class="font-mono-metric text-[10px] text-on-surface-variant">RATA-RATA DURASI ANALISIS</span>
+          <p class="font-display text-2xl text-primary font-bold mt-0.5">1.8 detik</p>
+        </div>
+      </div>
+
+      <!-- Search & Filter Bar -->
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-3 bg-surface-container-low p-2 border border-outline-variant">
+        <div class="flex items-center gap-2 w-full sm:w-auto">
+          <span class="material-symbols-outlined text-on-surface-variant text-[18px]">search</span>
+          <input class="bg-transparent text-xs focus:outline-none w-full sm:w-64 placeholder:text-on-surface-variant" id="archive-search" placeholder="Cari nama mahasiswa atau NIM..." type="text"/>
+        </div>
+
+        <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+          <span class="font-mono-metric text-xs text-on-surface-variant">Filter Status:</span>
+          <select class="bg-surface border border-outline-variant text-xs py-1 px-2 text-primary focus:outline-none cursor-pointer" id="archive-filter">
+            <option value="all">Semua Naskah</option>
+            <option value="suspect">Hanya Terindikasi AI / Plotter</option>
+            <option value="authentic">Hanya Lolos (Otentik)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Ledger Table -->
+      <div class="w-full overflow-x-auto border border-outline-variant bg-surface-container-lowest">
+        <table class="ledger-table">
+          <thead>
+            <tr>
+              <th>ID Berkas</th>
+              <th>Nama Mahasiswa</th>
+              <th>Mata Kuliah & Lembar</th>
+              <th>Kesesuaian DTW</th>
+              <th>Status Verdict</th>
+              <th class="text-right">Tindakan</th>
+            </tr>
+          </thead>
+          <tbody id="archive-tbody">
+            <tr class="archive-row row-flagged" data-status="suspect">
+              <td class="font-mono-metric text-xs text-secondary font-bold">BAF/KOMP/2024/X-1088</td>
+              <td>
+                <div class="flex flex-col">
+                  <span class="text-primary font-medium">Ahmad Fauzan</span>
+                  <span class="font-mono-metric text-[10px] text-secondary font-bold">NIM 13521088</span>
+                </div>
+              </td>
+              <td class="text-xs text-on-surface-variant">IF-4020 Teori Komputasi Lanjut • Lembar 1</td>
+              <td>
+                <span class="font-mono-metric text-xs text-secondary font-bold">89.0% (Seragam)</span>
+              </td>
+              <td>
+                <span class="verdict-stamp stamp-suspect text-[10px]">[ RISIKO TINGGI: PLOTTER ]</span>
+              </td>
+              <td class="text-right">
+                <button class="font-mono-metric text-xs text-secondary underline font-bold" data-nav="lembar-analisis" data-case="synthetic" type="button">Buka Lembar</button>
+              </td>
+            </tr>
+
+            <tr class="archive-row" data-status="authentic">
+              <td class="font-mono-metric text-xs text-on-surface-variant">BAF/KOMP/2024/X-1045</td>
+              <td>
+                <div class="flex flex-col">
+                  <span class="text-primary font-medium">Bagas Pratama</span>
+                  <span class="font-mono-metric text-[10px] text-on-surface-variant">NIM 13521045</span>
+                </div>
+              </td>
+              <td class="text-xs text-on-surface-variant">IF-3210 Algoritma Lanjut • Lembar 1</td>
+              <td>
+                <span class="font-mono-metric text-xs text-tertiary font-bold">14.2% (Wajar)</span>
+              </td>
+              <td>
+                <span class="verdict-stamp stamp-authentic text-[10px]">[ OTENTIK: LOLOS ]</span>
+              </td>
+              <td class="text-right">
+                <button class="font-mono-metric text-xs text-primary underline" data-nav="lembar-analisis" data-case="authentic" type="button">Buka Lembar</button>
+              </td>
+            </tr>
+
+            <tr class="archive-row row-flagged" data-status="suspect">
+              <td class="font-mono-metric text-xs text-secondary font-bold">BAF/KOMP/2024/X-1102</td>
+              <td>
+                <div class="flex flex-col">
+                  <span class="text-primary font-medium">Rafi Aditya</span>
+                  <span class="font-mono-metric text-[10px] text-secondary font-bold">NIM 13521102</span>
+                </div>
+              </td>
+              <td class="text-xs text-on-surface-variant">IF-3210 Algoritma Lanjut • Esai Mandiri</td>
+              <td>
+                <span class="font-mono-metric text-xs text-secondary font-bold">96.8% (Identik)</span>
+              </td>
+              <td>
+                <span class="verdict-stamp stamp-suspect text-[10px]">[ RISIKO TINGGI: PLOTTER ]</span>
+              </td>
+              <td class="text-right">
+                <button class="font-mono-metric text-xs text-secondary underline font-bold" data-nav="lembar-analisis" data-case="synthetic" type="button">Buka Lembar</button>
+              </td>
+            </tr>
+
+            <tr class="archive-row" data-status="authentic">
+              <td class="font-mono-metric text-xs text-on-surface-variant">BAF/KOMP/2024/X-1012</td>
+              <td>
+                <div class="flex flex-col">
+                  <span class="text-primary font-medium">Siti Rahmawati</span>
+                  <span class="font-mono-metric text-[10px] text-on-surface-variant">NIM 13521012</span>
+                </div>
+              </td>
+              <td class="text-xs text-on-surface-variant">IF-2110 Dasar Rekayasa Perangkat Lunak</td>
+              <td>
+                <span class="font-mono-metric text-xs text-tertiary font-bold">18.5% (Wajar)</span>
+              </td>
+              <td>
+                <span class="verdict-stamp stamp-authentic text-[10px]">[ OTENTIK: LOLOS ]</span>
+              </td>
+              <td class="text-right">
+                <button class="font-mono-metric text-xs text-primary underline" data-nav="lembar-analisis" data-case="authentic" type="button">Buka Lembar</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- ==================== OFFICIAL REPORT MODAL ==================== -->
+  <div class="modal-backdrop" id="report-modal">
+    <div class="modal-sheet p-6 relative">
+      <button class="absolute top-4 right-4 text-on-surface-variant hover:text-primary btn-no-print text-xl font-bold" id="btn-close-modal" type="button">&times;</button>
+      <div id="report-modal-body"></div>
+      
+      <div class="mt-6 pt-4 border-t border-outline-variant flex justify-end gap-3 btn-no-print">
+        <button class="px-4 py-2 border border-outline-variant text-xs font-mono-metric" onclick="document.getElementById('report-modal').classList.remove('open')">Tutup</button>
+        <button class="px-5 py-2 bg-primary text-white text-xs font-mono-metric flex items-center gap-2 hover:bg-primary-container" id="btn-execute-print">
+          <span class="material-symbols-outlined text-[16px]">print</span>
+          <span>Cetak Dokumen Resmi</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== EXAMINER IDENTITY MODAL ==================== -->
+  <div class="modal-backdrop" id="examiner-modal">
+    <div class="modal-sheet p-6 max-w-md w-full relative">
+      <button class="absolute top-4 right-4 text-on-surface-variant hover:text-primary text-xl font-bold" id="btn-close-examiner-modal" type="button">&times;</button>
+      <div class="border-b border-outline-variant pb-3 mb-4">
+        <h3 class="font-display text-lg text-primary font-semibold">Identitas Petugas Forensik</h3>
+        <p class="font-body-sm text-xs text-on-surface-variant mt-0.5">
+          Atur nama dan institusi pemeriksa yang akan tercantum dalam Berita Acara Forensik resmi.
+        </p>
+      </div>
+      <form id="form-examiner" class="flex flex-col gap-3">
+        <div>
+          <label class="font-mono-metric text-[10px] text-on-surface-variant block mb-1" for="input-examiner-name">NAMA LENGKAP & GELAR</label>
+          <input type="text" id="input-examiner-name" placeholder="Contoh: Dr. Budi Santoso, M.T." class="w-full p-2 border border-outline text-xs bg-surface focus:outline-none focus:border-primary font-body-md" value="Tim Evaluator Mandiri"/>
+        </div>
+        <div>
+          <label class="font-mono-metric text-[10px] text-on-surface-variant block mb-1" for="input-examiner-nip">NOMOR INDUK PEGAWAI (NIP) / NO. REGISTRASI</label>
+          <input type="text" id="input-examiner-nip" placeholder="Contoh: 198203152006041002" class="w-full p-2 border border-outline text-xs bg-surface focus:outline-none focus:border-primary font-mono-metric" value="REG-2024-LAB04"/>
+        </div>
+        <div>
+          <label class="font-mono-metric text-[10px] text-on-surface-variant block mb-1" for="input-examiner-inst">FAKULTAS / DEPARTEMEN / INSTITUSI</label>
+          <input type="text" id="input-examiner-inst" placeholder="Contoh: Fakultas Ilmu Komputer" class="w-full p-2 border border-outline text-xs bg-surface focus:outline-none focus:border-primary font-body-md" value="Laboratorium Forensik Akademik"/>
+        </div>
+        <div class="mt-4 pt-3 border-t border-outline-variant flex justify-between items-center gap-2">
+          <button type="button" class="px-3 py-1.5 border border-outline-variant text-xs font-mono-metric text-on-surface-variant hover:bg-surface-container" id="btn-reset-guest">
+            Gunakan Mode Tamu
+          </button>
+          <button type="submit" class="px-4 py-1.5 bg-primary text-white text-xs font-mono-metric font-semibold hover:bg-primary-container">
+            Simpan Identitas
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== 5 FORENSIC METHODS MODAL ==================== -->
+  <div class="modal-backdrop" id="methods-modal">
+    <div class="modal-sheet p-6 max-w-3xl w-full max-h-[90vh] overflow-y-auto relative">
+      <button class="absolute top-4 right-4 text-on-surface-variant hover:text-primary text-xl font-bold" id="btn-close-methods-modal" type="button">&times;</button>
+      
+      <div class="border-b border-outline-variant pb-3 mb-4">
+        <span class="font-mono-metric text-[10px] text-on-surface-variant uppercase tracking-wider">PANDUAN FORENSIK AKADEMIK • PRD BAGIAN 8</span>
+        <h3 class="font-display text-xl text-primary font-bold mt-0.5">5 Metode Pembeda: Naskah Asli vs Font Plotter</h3>
+        <p class="font-body-sm text-xs text-on-surface-variant mt-1">
+          Bagaimana algoritma computer vision dan analisis citra forensik membedakan tulisan tangan manusia dari generator font sintetis dan mesin pen-plotter.
+        </p>
+      </div>
+
+      <div class="space-y-4 text-xs font-body-md">
+        
+        <!-- Metode 1 -->
+        <div class="p-3 bg-surface-container-low border border-outline-variant">
+          <div class="flex items-center justify-between gap-2 mb-1.5">
+            <h4 class="font-display text-sm font-bold text-primary flex items-center gap-1.5">
+              <span class="w-5 h-5 bg-secondary text-white font-mono-metric text-[10px] flex items-center justify-center font-bold">1</span>
+              Dynamic Time Warping (DTW) & Entropi Bentuk Alograf
+            </h4>
+            <span class="font-mono-metric text-[10px] px-2 py-0.5 bg-secondary-fixed text-on-secondary-fixed-variant font-bold">FITUR TERKUAT</span>
+          </div>
+          <p class="text-on-surface-variant leading-relaxed mb-2">
+            Algoritma mengekstrak dan menormalkan kontur huruf sejenis yang berulang (misal alograf 'a', 'e', 'k', 't') dalam satu halaman, lalu menghitung jarak kurvatura matematisnya.
+          </p>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-2 font-mono-metric text-[11px] pt-2 border-t border-outline-variant/60">
+            <div class="p-2 bg-secondary-fixed/20 border-l-2 border-secondary">
+              <strong class="text-secondary">Font / Pen-Plotter (Fake):</strong>
+              <p class="text-on-surface text-[10px] mt-0.5">Korelasi kurva $\ge 99\%$. Font TrueType selalu merender bentuk vektor yang identik mutlak pada setiap kemunculan.</p>
+            </div>
+            <div class="p-2 bg-tertiary-fixed/20 border-l-2 border-tertiary">
+              <strong class="text-tertiary">Tulisan Tangan Manusia (Asli):</strong>
+              <p class="text-on-surface text-[10px] mt-0.5">Korelasi hanya 65%–82%. Biomekanika tangan dan keletihan motorik mustahil menduplikasi kurvatura yang 100% kembar.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Metode 2 -->
+        <div class="p-3 bg-surface-container-low border border-outline-variant">
+          <div class="flex items-center justify-between gap-2 mb-1.5">
+            <h4 class="font-display text-sm font-bold text-primary flex items-center gap-1.5">
+              <span class="w-5 h-5 bg-secondary text-white font-mono-metric text-[10px] flex items-center justify-center font-bold">2</span>
+              Linearitas Garis Dasar (Hough Transform Baseline Residuals)
+            </h4>
+            <span class="font-mono-metric text-[10px] px-2 py-0.5 bg-surface-container text-primary font-medium">LINEARITAS MISTAR</span>
+          </div>
+          <p class="text-on-surface-variant leading-relaxed mb-2">
+            Mendeteksi titik terbawah setiap kata sepanjang baris naskah dan menghitung deviasi standar residu terhadap garis mistar kertas bergaris.
+          </p>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-2 font-mono-metric text-[11px] pt-2 border-t border-outline-variant/60">
+            <div class="p-2 bg-secondary-fixed/20 border-l-2 border-secondary">
+              <strong class="text-secondary">Font / Pen-Plotter (Fake):</strong>
+              <p class="text-on-surface text-[10px] mt-0.5">Deviasi $\sigma < 0.05\%$. Motor mekanis plotter bergerak lurus kaku di atas rel sumbu X tanpa fluktuasi gravitasi tangan.</p>
+            </div>
+            <div class="p-2 bg-tertiary-fixed/20 border-l-2 border-tertiary">
+              <strong class="text-tertiary">Tulisan Tangan Manusia (Asli):</strong>
+              <p class="text-on-surface text-[10px] mt-0.5">Deviasi $\sigma \approx 2.5\text{--}6.0\text{ px}$. Garis tulisan bergelombang lembut mengikuti pergeseran rotasi pergelangan tangan (wrist pivot).</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Metode 3 -->
+        <div class="p-3 bg-surface-container-low border border-outline-variant">
+          <div class="flex items-center justify-between gap-2 mb-1.5">
+            <h4 class="font-display text-sm font-bold text-primary flex items-center gap-1.5">
+              <span class="w-5 h-5 bg-secondary text-white font-mono-metric text-[10px] flex items-center justify-center font-bold">3</span>
+              Stroke Width Transform (SWT) & Variasi Tekanan Pena
+            </h4>
+            <span class="font-mono-metric text-[10px] px-2 py-0.5 bg-surface-container text-primary font-medium">PROFIL KETEBALAN</span>
+          </div>
+          <p class="text-on-surface-variant leading-relaxed mb-2">
+            Mengukur ketebalan lebar goresan tinta di sepanjang lintasan goresan huruf menggunakan skeletonisasi morfologi OpenCV.
+          </p>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-2 font-mono-metric text-[11px] pt-2 border-t border-outline-variant/60">
+            <div class="p-2 bg-secondary-fixed/20 border-l-2 border-secondary">
+              <strong class="text-secondary">Font / Pen-Plotter (Fake):</strong>
+              <p class="text-on-surface text-[10px] mt-0.5">Ketebalan goresan konstan/monoton karena tekanan pegas kepala plotter mekanis bersifat statis sepanjang gerak.</p>
+            </div>
+            <div class="p-2 bg-tertiary-fixed/20 border-l-2 border-tertiary">
+              <strong class="text-tertiary">Tulisan Tangan Manusia (Asli):</strong>
+              <p class="text-on-surface text-[10px] mt-0.5">Tekanan jari dinamis: tarikan ke bawah (downstroke) lebih tebal, sedangkan tarikan ke atas (upstroke) lebih tipis dan ringan.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Metode 4 -->
+        <div class="p-3 bg-surface-container-low border border-outline-variant">
+          <div class="flex items-center justify-between gap-2 mb-1.5">
+            <h4 class="font-display text-sm font-bold text-primary flex items-center gap-1.5">
+              <span class="w-5 h-5 bg-secondary text-white font-mono-metric text-[10px] flex items-center justify-center font-bold">4</span>
+              Titik Henti & Pen-Lifts (Gradient Density Profile)
+            </h4>
+            <span class="font-mono-metric text-[10px] px-2 py-0.5 bg-surface-container text-primary font-medium">RESEP PIGMEN TINTA</span>
+          </div>
+          <p class="text-on-surface-variant leading-relaxed mb-2">
+            Analisis kepadatan pigmen tinta pada titik awal sentuhan pena (landing points) dan titik pelepasan pena (pen-lifts).
+          </p>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-2 font-mono-metric text-[11px] pt-2 border-t border-outline-variant/60">
+            <div class="p-2 bg-secondary-fixed/20 border-l-2 border-secondary">
+              <strong class="text-secondary">Font / Pen-Plotter (Fake):</strong>
+              <p class="text-on-surface text-[10px] mt-0.5">Ujung goresan tumpul atau memiliki gumpalan tinta statis yang berulang pada jeda instruksi kode motor plotter.</p>
+            </div>
+            <div class="p-2 bg-tertiary-fixed/20 border-l-2 border-tertiary">
+              <strong class="text-tertiary">Tulisan Tangan Manusia (Asli):</strong>
+              <p class="text-on-surface text-[10px] mt-0.5">Terdapat ekor runcing alami (tapered tails) saat pena diangkat sambil bergerak, serta resapan kapiler serat kertas yang bervariasi.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Metode 5 -->
+        <div class="p-3 bg-surface-container-low border border-outline-variant">
+          <div class="flex items-center justify-between gap-2 mb-1.5">
+            <h4 class="font-display text-sm font-bold text-primary flex items-center gap-1.5">
+              <span class="w-5 h-5 bg-secondary text-white font-mono-metric text-[10px] flex items-center justify-center font-bold">5</span>
+              Konsistensi Sudut Kemiringan (Slant Angle Histogram)
+            </h4>
+            <span class="font-mono-metric text-[10px] px-2 py-0.5 bg-surface-container text-primary font-medium">DISTRIBUSI SUDUT</span>
+          </div>
+          <p class="text-on-surface-variant leading-relaxed mb-2">
+            Distribusi sudut orientasi vertikal pada karakter ber-tiang tinggi seperti 'l', 't', 'b', 'd', 'k', 'p'.
+          </p>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-2 font-mono-metric text-[11px] pt-2 border-t border-outline-variant/60">
+            <div class="p-2 bg-secondary-fixed/20 border-l-2 border-secondary">
+              <strong class="text-secondary">Font / Pen-Plotter (Fake):</strong>
+              <p class="text-on-surface text-[10px] mt-0.5">Sudut kemiringan seragam secara sempurna ($\pm 0.2^\circ$) pada seluruh halaman naskah.</p>
+            </div>
+            <div class="p-2 bg-tertiary-fixed/20 border-l-2 border-tertiary">
+              <strong class="text-tertiary">Tulisan Tangan Manusia (Asli):</strong>
+              <p class="text-on-surface text-[10px] mt-0.5">Kemiringan bergeser secara wajar ($\pm 3.5^\circ\text{ to }\pm 7.0^\circ$) seiring perpindahan sudut lengan di atas meja.</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="mt-5 pt-3 border-t border-outline-variant flex justify-end">
+        <button type="button" class="px-5 py-1.5 bg-primary text-white text-xs font-mono-metric font-semibold hover:bg-primary-container" onclick="document.getElementById('methods-modal').classList.remove('open')">
+          Tutup Panduan
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== COMPACT FOOTER ==================== -->
+  <footer class="w-full bg-surface-container-low border-t border-outline-variant mt-auto py-3 px-6 md:px-12">
+    <div class="flex flex-col md:flex-row items-center justify-between gap-2 text-xs text-on-surface-variant">
+      <div class="flex items-center gap-3">
+        <span>AsliTulis • Platform Audit Forensik Keaslian Tulisan Tangan</span>
+        <span class="hidden md:inline font-mono-metric">• STANDAR VERIFIKASI AKADEMIK INDONESIA</span>
+      </div>
+      <div class="font-mono-metric uppercase tracking-wider text-[10px]">
+        Protokol Pemeriksaan Terenkripsi • Lab Forensik Digital
+      </div>
+    </div>
+  </footer>
+
+  <!-- Core Interactive Script -->
+  <script src="js/app.js"></script>
+</body>
+</html>

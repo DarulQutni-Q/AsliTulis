@@ -1,0 +1,570 @@
+/* ==========================================================================
+   AsliTulis — Forensic Examination Console
+   Optimized 60fps GPU-Accelerated Stylesheet
+   Design System: Archival Functionalism & Tactile Editorial Minimalism
+   ========================================================================== */
+
+:root {
+  /* Color Palette (Forensic Examination Console) */
+  --surface: #FCF9EF;
+  --surface-bright: #FCF9EF;
+  --surface-dim: #DCDAD0;
+  --surface-container-lowest: #FFFFFF;
+  --surface-container-low: #F6F4EA;
+  --surface-container: #F0EEE4;
+  --surface-container-high: #EAE8DE;
+  --surface-container-highest: #E5E3D9;
+  
+  --primary: #0B1E3A;
+  --primary-container: #223350;
+  --on-primary: #FFFFFF;
+  --on-primary-container: #8B9CBE;
+  
+  --secondary: #B23A2E;
+  --secondary-deep: #8C291F;
+  --secondary-fixed: #FFDAD5;
+  --secondary-fixed-dim: #FFB4A9;
+  --on-secondary-fixed-variant: #891C15;
+  
+  --tertiary: #002316;
+  --tertiary-container: #16392B;
+  --tertiary-fixed: #C5EBD6;
+  --tertiary-fixed-dim: #A9CFBB;
+  --on-tertiary-container: #7EA390;
+  
+  --outline: #75777E;
+  --outline-variant: #CBD4DC;
+  --on-surface: #1B1C16;
+  --on-surface-variant: #44474D;
+  
+  --rule-blue: #CBD4DC;
+  --rule-red: #E6A8A8;
+
+  /* Typography */
+  --font-serif: 'Source Serif 4', Georgia, serif;
+  --font-sans: 'Work Sans', system-ui, -apple-system, sans-serif;
+  --font-mono: 'Work Sans', monospace;
+
+  /* Layout */
+  --header-height: 64px;
+}
+
+/* Reset & Base */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: auto !important; /* Disable smooth scroll to avoid scroll offset bugs */
+  background-color: var(--surface);
+  color: var(--on-surface);
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--surface);
+  color: var(--on-surface);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Sharp Institutional Aesthetics (0px border radius) */
+button, input, select, textarea, .card, .badge, .panel, .tag {
+  border-radius: 0 !important;
+}
+
+/* Typography Classes */
+.font-display { font-family: var(--font-serif); font-weight: 600; }
+.font-headline { font-family: var(--font-serif); }
+.font-body { font-family: var(--font-sans); }
+.font-mono-metric {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+/* Header */
+.app-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--header-height);
+  background-color: var(--surface);
+  border-bottom: 1px solid var(--outline-variant);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.5rem;
+}
+
+.nav-link {
+  height: var(--header-height);
+  display: flex;
+  align-items: center;
+  padding: 0 1rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--on-surface-variant);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.nav-link:hover {
+  color: var(--on-surface);
+}
+
+.nav-link.active {
+  color: var(--primary);
+  font-weight: 600;
+  border-bottom-color: var(--primary);
+}
+
+/* Main Container */
+.main-content {
+  padding-top: var(--header-height);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.view-section {
+  display: none !important;
+  opacity: 0;
+  visibility: hidden;
+  height: 0;
+  overflow: hidden;
+}
+
+.view-section.active {
+  display: block !important;
+  opacity: 1;
+  visibility: visible;
+  height: auto;
+  overflow: visible;
+  animation: fadeInInstant 0.12s ease-out forwards;
+}
+
+.view-section.active.flex,
+.view-section.active.flex-view {
+  display: flex !important;
+}
+
+@keyframes fadeInInstant {
+  from { opacity: 0; transform: translateY(-2px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Tactile Ruled Paper Drop Zone */
+.drop-zone {
+  position: relative;
+  min-height: 380px;
+  border: 2px dashed var(--outline-variant);
+  background-color: var(--surface-container-lowest);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+  overflow: hidden;
+}
+
+.drop-zone:hover, .drop-zone.drag-over {
+  border-color: var(--primary-container);
+  background-color: #FAF8F0;
+}
+
+.ruled-lines-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.45;
+  background-image: repeating-linear-gradient(transparent, transparent 23px, var(--rule-blue) 24px);
+}
+
+/* Scanner Beam Effect */
+.scan-beam-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(252, 249, 239, 0.95);
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.scan-beam-overlay.scanning {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.laser-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent 0%, var(--secondary) 50%, transparent 100%);
+  box-shadow: 0 0 12px var(--secondary), 0 0 24px rgba(178, 58, 46, 0.4);
+  top: 0;
+  transform: translate3d(0, 0, 0);
+  will-change: transform;
+}
+
+@keyframes laserScanAnimation {
+  0% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(0, 380px, 0); }
+  100% { transform: translate3d(0, 0, 0); }
+}
+
+.scan-beam-overlay.scanning .laser-line {
+  animation: laserScanAnimation 2.2s ease-in-out infinite;
+}
+
+/* ==========================================================================
+   ACTUAL SPECIMEN PHOTO VIEWPORT (REAL HANDWRITTEN SCANS)
+   ========================================================================== */
+.specimen-viewport-wrapper {
+  position: relative;
+  background-color: var(--surface-container-lowest);
+  border: 1px solid var(--outline-variant);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  overflow: hidden;
+}
+
+.specimen-canvas-container {
+  position: relative;
+  width: 100%;
+  max-height: 520px;
+  background-color: #F4F1E6;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 0.75rem;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.specimen-canvas-container::-webkit-scrollbar {
+  width: 5px;
+}
+.specimen-canvas-container::-webkit-scrollbar-track {
+  background: var(--surface-container);
+}
+.specimen-canvas-container::-webkit-scrollbar-thumb {
+  background: var(--outline-variant);
+}
+
+.specimen-image-frame {
+  position: relative;
+  max-width: 100%;
+  box-shadow: 0 2px 12px rgba(11, 30, 58, 0.08);
+  border: 1px solid rgba(203, 212, 220, 0.6);
+  line-height: 0;
+  user-select: none;
+}
+
+.specimen-image-frame img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  max-height: 485px;
+  object-fit: contain;
+}
+
+/* SVG Forensic Overlay Layer (Zero-Collision Annotations) */
+.specimen-svg-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: auto;
+  transition: opacity 0.2s ease;
+}
+
+.specimen-svg-overlay.hidden-overlay {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Subtle, Elegant Forensic Bounding Rectangles */
+.forensic-rect {
+  fill: rgba(255, 218, 213, 0.35);
+  stroke: var(--secondary);
+  stroke-width: 1.5;
+  stroke-dasharray: 4, 3;
+  cursor: pointer;
+  transition: fill 0.15s ease, stroke-width 0.15s ease;
+}
+
+.forensic-rect:hover, .forensic-rect.active-glyph {
+  fill: rgba(255, 218, 213, 0.75);
+  stroke-dasharray: none;
+  stroke-width: 2.2;
+}
+
+.forensic-rect.rect-authentic {
+  fill: rgba(197, 235, 214, 0.35);
+  stroke: var(--tertiary-container);
+}
+
+.forensic-rect.rect-authentic:hover, .forensic-rect.rect-authentic.active-glyph {
+  fill: rgba(197, 235, 214, 0.75);
+}
+
+/* Clean Micro Pin Indicators (No Overlapping Collisions) */
+.forensic-pin {
+  cursor: pointer;
+  transform-origin: center;
+  transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.forensic-pin:hover {
+  transform: scale(1.2);
+}
+
+.forensic-pin circle {
+  fill: var(--secondary);
+  transition: fill 0.15s ease, filter 0.15s ease;
+}
+
+.forensic-pin.active-pin circle {
+  filter: drop-shadow(0 0 6px rgba(178, 58, 46, 0.7));
+}
+
+.forensic-pin text {
+  fill: #FFFFFF;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+.forensic-pin.pin-authentic circle {
+  fill: var(--tertiary-container);
+}
+
+.forensic-pin.pin-authentic.active-pin circle {
+  filter: drop-shadow(0 0 6px rgba(22, 57, 43, 0.7));
+}
+
+/* Interactive Floating Tooltip (Appears at cursor, never collides) */
+.forensic-floating-tooltip {
+  position: absolute;
+  background-color: var(--primary);
+  color: #FFFFFF;
+  padding: 6px 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  pointer-events: none;
+  z-index: 70;
+  box-shadow: 0 4px 14px rgba(11, 30, 58, 0.35);
+  border-left: 3px solid var(--secondary);
+  display: none;
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+}
+
+/* Baseline Caliper Grid Overlay */
+.ruler-grid-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.55;
+  background-size: 100% 28px;
+  background-image: linear-gradient(to bottom, rgba(78, 95, 126, 0.3) 1px, transparent 1px);
+  transition: opacity 0.2s ease;
+}
+
+.ruler-grid-overlay.hidden-grid {
+  opacity: 0;
+}
+
+/* ==========================================================================
+   FORENSIC LOUPE (2.5x MAGNIFIER LENS)
+   ========================================================================== */
+.loupe-lens {
+  position: absolute;
+  width: 170px;
+  height: 170px;
+  border-radius: 50% !important;
+  border: 2px solid var(--primary);
+  box-shadow: 0 6px 25px rgba(11, 30, 58, 0.35), inset 0 0 20px rgba(0,0,0,0.15);
+  background-color: #FFFFFF;
+  background-repeat: no-repeat;
+  pointer-events: none;
+  display: none;
+  z-index: 55;
+  transform: translate3d(-50%, -50%, 0);
+  will-change: transform, left, top;
+}
+
+.loupe-lens::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: 
+    linear-gradient(to right, transparent 49%, rgba(178, 58, 46, 0.35) 50%, transparent 51%),
+    linear-gradient(to bottom, transparent 49%, rgba(178, 58, 46, 0.35) 50%, transparent 51%);
+}
+
+.specimen-canvas-container.loupe-mode {
+  cursor: crosshair;
+}
+
+/* Verdict Stamp Badges */
+.verdict-stamp {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.65rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  border: 1.5px solid;
+  text-transform: uppercase;
+}
+
+.stamp-suspect {
+  border-color: var(--secondary);
+  background-color: var(--secondary-fixed);
+  color: var(--on-secondary-fixed-variant);
+}
+
+.stamp-authentic {
+  border-color: var(--tertiary-container);
+  background-color: var(--tertiary-fixed);
+  color: var(--tertiary);
+}
+
+/* Progress / Metric Bars */
+.metric-bar-bg {
+  width: 100%;
+  height: 8px;
+  background-color: var(--surface-container-high);
+  overflow: hidden;
+  position: relative;
+}
+
+.metric-bar-fill {
+  height: 100%;
+  width: 0%;
+  transition: width 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: width;
+}
+
+/* Ledger Tables */
+.ledger-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.ledger-table th {
+  padding: 0.5rem 0.875rem;
+  background-color: var(--surface-container);
+  border-bottom: 2px solid var(--outline-variant);
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  color: var(--on-surface-variant);
+  letter-spacing: 0.03em;
+}
+
+.ledger-table td {
+  padding: 0.65rem 0.875rem;
+  border-bottom: 1px solid var(--outline-variant);
+  font-size: 0.8125rem;
+  transition: background-color 0.12s ease;
+}
+
+.ledger-table tbody tr:hover {
+  background-color: var(--surface-container-low);
+}
+
+.ledger-table tbody tr.row-flagged {
+  background-color: rgba(255, 218, 213, 0.12);
+}
+
+.ledger-table tbody tr.row-flagged:hover {
+  background-color: rgba(255, 218, 213, 0.28);
+}
+
+/* Printable Official Report Modal */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(11, 30, 58, 0.65);
+  backdrop-filter: blur(3px);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.modal-backdrop.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal-sheet {
+  background-color: #FFFFFF;
+  border: 1px solid var(--outline-variant);
+  max-width: 760px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+}
+
+/* Print Specific */
+@media print {
+  .app-header, .btn-no-print, .nav-link, footer, .specimen-viewport-wrapper, .modal-backdrop {
+    display: none !important;
+  }
+  body {
+    background-color: #FFFFFF !important;
+  }
+  .modal-backdrop.open {
+    position: static !important;
+    background: transparent !important;
+    opacity: 1 !important;
+    display: block !important;
+  }
+  .modal-sheet {
+    box-shadow: none !important;
+    border: none !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+  }
+}

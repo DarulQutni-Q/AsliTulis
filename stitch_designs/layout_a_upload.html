@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+
+<html lang="id"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;0,8..60,700;1,8..60,400&amp;family=Work+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base { html, body { margin: 0; padding: 0; } body { overscroll-behavior: none; } main > :first-child { margin-top: 0 !important; } main > :last-child { margin-bottom: 0 !important; } } ::-webkit-scrollbar { display: none; }</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: 'class', theme: { extend: { colors: { 'on-primary-container': '#8b9cbe', 'on-primary-fixed': '#081b37', 'surface': '#fcf9ef', 'on-secondary-fixed-variant': '#891c15', 'secondary-fixed': '#ffdad5', 'surface-bright': '#fcf9ef', 'on-primary': '#ffffff', 'on-tertiary-fixed': '#002115', 'secondary-fixed-dim': '#ffb4a9', 'outline-variant': '#c5c6ce', 'inverse-on-surface': '#f3f1e7', 'tertiary-container': '#16392b', 'surface-container-lowest': '#ffffff', 'surface-container-low': '#f6f4ea', 'tertiary-fixed': '#c5ebd6', 'background': '#fcf9ef', 'on-primary-fixed-variant': '#364765', 'surface-tint': '#4e5f7e', 'on-surface': '#1b1c16', 'tertiary': '#002316', 'on-secondary': '#ffffff', 'surface-variant': '#e5e3d9', 'on-tertiary': '#ffffff', 'on-surface-variant': '#44474d', 'on-secondary-fixed': '#410001', 'secondary': '#aa3529', 'inverse-primary': '#b6c7eb', 'tertiary-fixed-dim': '#a9cfbb', 'primary-fixed-dim': '#b6c7eb', 'on-error-container': '#93000a', 'on-secondary-container': '#700605', 'surface-container-high': '#eae8de', 'error-container': '#ffdad6', 'on-error': '#ffffff', 'surface-container-highest': '#e5e3d9', 'primary-fixed': '#d6e3ff', 'on-tertiary-fixed-variant': '#2b4d3e', 'error': '#ba1a1a', 'surface-container': '#f0eee4', 'primary': '#0b1e3a', 'primary-container': '#223350', 'secondary-container': '#ff7261', 'surface-dim': '#dcdad0', 'on-background': '#1b1c16', 'outline': '#75777e', 'on-tertiary-container': '#7ea390', 'inverse-surface': '#30312a' }, borderRadius: { 'DEFAULT': '0.25rem', 'lg': '0.5rem', 'xl': '0.75rem', 'full': '9999px' }, spacing: { 'space-xs': '0.25rem', 'space-sm': '0.5rem', 'space-lg': '1.5rem', 'space-xl': '2.5rem', 'space-md': '1rem', 'margin': '2.5rem', 'margin-mobile': '1rem', 'gutter': '1.5rem', 'gutter-sm': '1rem' }, fontFamily: { 'mono-metric': ['Work Sans'], 'body-md': ['Work Sans'], 'body-lg': ['Work Sans'], 'headline-lg': ['"Source Serif 4"'], 'body-sm': ['Work Sans'], 'label-sm': ['Work Sans'], 'headline-lg-mobile': ['"Source Serif 4"'], 'headline-md': ['"Source Serif 4"'], 'label-md': ['Work Sans'], 'display': ['"Source Serif 4"'], 'headline-sm': ['"Source Serif 4"'] }, fontSize: { 'mono-metric': ['0.8125rem', { lineHeight: '1rem', letterSpacing: '0.02em', fontWeight: '600' }], 'body-md': ['0.9375rem', { lineHeight: '1.5rem', fontWeight: '400' }], 'body-lg': ['1.0625rem', { lineHeight: '1.625rem', fontWeight: '400' }], 'headline-lg': ['2rem', { lineHeight: '2.5rem', letterSpacing: '-0.015em', fontWeight: '600' }], 'body-sm': ['0.8125rem', { lineHeight: '1.25rem', fontWeight: '400' }], 'label-sm': ['0.75rem', { lineHeight: '1rem', fontWeight: '500' }], 'headline-lg-mobile': ['1.625rem', { lineHeight: '2.125rem', letterSpacing: '-0.01em', fontWeight: '600' }], 'headline-md': ['1.5rem', { lineHeight: '2rem', letterSpacing: '-0.01em', fontWeight: '500' }], 'label-md': ['0.875rem', { lineHeight: '1.25rem', fontWeight: '500' }], 'display': ['2.5rem', { lineHeight: '3rem', letterSpacing: '-0.02em', fontWeight: '600' }], 'headline-sm': ['1.25rem', { lineHeight: '1.75rem', fontWeight: '500' }] } } } };</script></head><body class="bg-surface font-body-md text-on-surface antialiased min-h-screen flex flex-col"><header class="fixed top-0 w-full z-50 bg-surface border-b border-outline-variant"><div class="h-20 w-full px-margin flex items-center justify-between"><div class="flex items-center gap-space-lg"><div class="flex items-center gap-space-md"><img alt="AsliTulis Wordmark Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1WgSLTYmkY6ahreZndR5Xek2LYOo0U8Bavgz0o6I0-AdSf-1GNKaNO8B_W27q-1oZQjdqJMsE6cakcskTrccovX451Uy9wUWTbGZwX5qqOBfo8pZOx3udY0yr1l_ozTvyC90JC62nDZWsDNjUG2KJzdyM9Srh6RtKYL-nQtVh_jd7N7j9zt3sET2NEaYHjlhm1igFWh1vMfE574LvH0DM7AFSyDfK07fJd8sbcaZlsg_buBMnJt2ZtUcD0"/><div class="h-6 w-px bg-outline-variant"></div><div class="flex flex-col"><span class="font-headline-sm text-headline-sm text-primary leading-none">AsliTulis</span><span class="font-label-sm text-label-sm text-on-surface-variant tracking-wider uppercase mt-space-xs">Forensik Naskah Akademik</span></div></div><div class="hidden xl:flex items-center gap-space-sm pl-space-md border-l border-outline-variant"><span class="w-2 h-2 rounded-full bg-tertiary-container"></span><span class="font-mono-metric text-mono-metric text-on-surface-variant uppercase tracking-wider">Server Forensik Akademik Aktif</span></div></div><nav class="hidden md:flex items-center gap-space-lg h-full" data-active-classes="text-primary font-semibold border-b-2 border-primary"><a aria-current="page" class="h-full flex items-center transition-colors pb-0.5 text-primary font-semibold border-b-2 border-primary" data-path="pemeriksaan-berkas" href="#">Pemeriksaan Berkas</a><a class="h-full flex items-center font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-colors pb-0.5" data-path="lembar-analisis" href="#">Lembar Analisis</a><a class="h-full flex items-center font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-colors pb-0.5" data-path="arsip-pengujian" href="#">Arsip Pengujian</a></nav><div class="flex items-center gap-space-md"><div class="hidden sm:flex flex-col text-right"><span class="font-label-md text-label-md text-primary font-medium">Dr. Hendra Gunawan, S.Kom., M.Eng.</span><span class="font-label-sm text-label-sm text-on-surface-variant">Fakultas Ilmu Komputer</span></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="w-full pt-20 bg-surface flex-1"><div class="flex flex-col w-full">
+<!-- Meja Periksa Dokumen Container -->
+<div class="w-full px-margin py-space-lg flex flex-col gap-space-xl">
+<!-- Header Konteks & Status Berkas -->
+<div class="w-full flex flex-col lg:flex-row lg:items-end justify-between gap-space-md border-b border-outline-variant pb-space-md">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Arsip Laboratorium Forensik Komputasi • Ruang Uji 04</span>
+<h1 class="font-headline-lg text-headline-lg text-primary mt-space-xs">Meja Periksa Naskah Ujian</h1>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-2xl mt-space-xs">
+          Verifikasi keaslian naskah tugas tulis tangan mahasiswa terhadap manipulasi generator font sintetis dan eksekusi pena robot (pen-plotter AI).
+        </p>
+</div>
+<!-- Mode Selector Switcher -->
+<div class="flex items-center bg-surface-container p-1 rounded-none border border-outline-variant self-start lg:self-auto">
+<button class="px-space-md py-1.5 font-label-md text-label-md bg-surface-container-lowest text-primary shadow-sm font-semibold transition-all" id="mode-single" type="button">
+          Mode Spot-Check Tunggal
+        </button>
+<button class="px-space-md py-1.5 font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-all" id="mode-batch" type="button">
+          Pemeriksaan Paralel (hingga 30 lembar)
+        </button>
+</div>
+</div>
+<!-- Parameter Naskah / Metadata Formulir Akademik -->
+<div class="w-full bg-surface-container-low border border-outline-variant p-space-md">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-space-lg">
+<!-- Mata Kuliah -->
+<div class="flex flex-col">
+<label class="font-label-sm text-label-sm text-on-surface-variant mb-space-xs" for="course-code">Mata Kuliah / Kelas Ujian</label>
+<input class="w-full bg-transparent border-b border-outline text-primary font-body-md text-body-md py-1 focus:outline-none focus:border-primary transition-colors" id="course-code" type="text" value="IF-3210 Algoritma Lanjut (K-01)"/>
+</div>
+<!-- Tipe Pengujian -->
+<div class="flex flex-col">
+<label class="font-label-sm text-label-sm text-on-surface-variant mb-space-xs" for="exam-type">Tipe Berkas Pengujian</label>
+<select class="w-full bg-transparent border-b border-outline text-primary font-body-md text-body-md py-1 focus:outline-none focus:border-primary transition-colors cursor-pointer" id="exam-type">
+<option value="uts">Ujian Tengah Semester (Lembar Bergaris)</option>
+<option value="mandiri">Esai Tangan Mandiri (Kertas Polos Folio)</option>
+<option value="laporan">Laporan Praktikum Laboratorium</option>
+<option value="kuis">Kuis Terjadwal / Lembar Catatan</option>
+</select>
+</div>
+<!-- Sensitivitas Forensik -->
+<div class="flex flex-col">
+<label class="font-label-sm text-label-sm text-on-surface-variant mb-space-xs" for="sensitivity-level">Sensitivitas Deteksi Glif</label>
+<select class="w-full bg-transparent border-b border-outline text-primary font-body-md text-body-md py-1 focus:outline-none focus:border-primary transition-colors cursor-pointer" id="sensitivity-level">
+<option value="tight">Forensik Ketat (Analisis Tekanan Mikroskopik &amp; Kerning)</option>
+<option value="standard">Standar Akademik (Toleransi Ragam Wajar Siswa)</option>
+<option value="exploratory">Cepat (Inspeksi Keseragaman Baseline Global)</option>
+</select>
+</div>
+</div>
+</div>
+<!-- The Tactile Desk Centerpiece (Drop Zone Area) -->
+<div class="w-full bg-surface-container p-space-md border border-outline-variant relative">
+<!-- Outer desk mat effect -->
+<div class="w-full bg-surface-container-lowest border-2 border-dashed border-outline-variant hover:border-primary transition-colors relative flex flex-col items-center justify-center p-space-xl min-h-[420px] text-center cursor-pointer group" id="drop-zone">
+<!-- Ruled Paper Background Texture Effect -->
+<div class="absolute inset-0 pointer-events-none opacity-40" style="background-image: repeating-linear-gradient(transparent, transparent 23px, #cbd4dc 24px);"></div>
+<!-- Official Seal / Corner Stamps -->
+<div class="absolute top-space-md left-space-md hidden sm:flex items-center gap-space-xs pointer-events-none">
+<span class="font-mono-metric text-mono-metric text-on-surface-variant border border-outline-variant px-2 py-0.5 bg-surface-container-low">LEMBAR UJI: FORM-AT-09</span>
+</div>
+<div class="absolute top-space-md right-space-md hidden sm:flex items-center gap-space-xs pointer-events-none">
+<span class="font-mono-metric text-mono-metric text-on-surface-variant border border-outline-variant px-2 py-0.5 bg-surface-container-low">RESOLUSI OPTIMAL: ≥300 DPI</span>
+</div>
+<!-- Center Workspace Icon and Directive -->
+<div class="relative z-10 flex flex-col items-center max-w-xl">
+<div class="w-16 h-16 rounded-none bg-surface-container-high border border-outline-variant flex items-center justify-center mb-space-md group-hover:bg-primary-container transition-colors">
+<span class="material-symbols-outlined text-primary text-[32px] group-hover:text-on-primary-container transition-colors">history_edu</span>
+</div>
+<p class="font-headline-md text-headline-md text-primary mb-space-xs">
+            Taruh lembar jawaban atau seret foto tulisan tangan mahasiswa ke sini
+          </p>
+<p class="font-body-md text-body-md text-on-surface-variant mb-space-lg">
+            Mendukung pindaian naskah format JPG, PNG, HEIC, atau PDF multi-halaman hingga batas ukuran 25 MB per dokumen.
+          </p>
+<!-- Action Buttons -->
+<div class="flex flex-wrap items-center justify-center gap-space-md">
+<label class="px-space-lg py-space-sm bg-primary-container text-surface border border-primary font-label-md text-label-md cursor-pointer hover:bg-primary transition-colors">
+              Pilih Berkas dari Perangkat
+              <input accept=".jpg,.jpeg,.png,.heic,.pdf" class="hidden" id="file-input" multiple="" type="file"/>
+</label>
+<button class="px-space-lg py-space-sm bg-surface-container-low text-primary border border-outline-variant font-label-md text-label-md hover:bg-surface-container-high transition-colors" id="btn-demo" type="button">
+              Gunakan Contoh Tugas Ujian (Demo Sample)
+            </button>
+</div>
+<!-- Discrete Hint under actions -->
+<span class="font-label-sm text-label-sm text-on-surface-variant mt-space-md">
+            Algoritma otomatis mengekstraksi kontur goresan tinta, baseline kemiringan, dan distribusi jarak antar-glif.
+          </span>
+</div>
+<!-- Simulation Progress Indicator (Hidden by default) -->
+<div class="hidden absolute inset-0 bg-surface-container-lowest/95 z-20 flex-col items-center justify-center p-space-xl" id="upload-progress">
+<div class="w-full max-w-md flex flex-col items-center gap-space-sm">
+<div class="w-10 h-10 border-2 border-primary border-t-transparent animate-spin"></div>
+<span class="font-headline-sm text-headline-sm text-primary mt-space-sm">Memindai Densitas Karakter...</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant" id="progress-phase">Melakukan kalibrasi sudut rotasi kertas dan segregasi baris</span>
+<div class="w-full bg-surface-container-high h-1 mt-space-sm">
+<div class="bg-primary h-1 w-0 transition-all duration-300" id="progress-bar-fill"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Quick Scan Sample Preview Bar (Shows selected / sample thumbnail) -->
+<div class="hidden mt-space-md bg-surface-container-lowest border border-outline-variant p-space-md flex flex-col md:flex-row items-start md:items-center justify-between gap-space-md" id="specimen-card">
+<div class="flex items-center gap-space-md">
+<div class="w-16 h-20 bg-surface-container-high border border-outline-variant flex items-center justify-center overflow-hidden shrink-0">
+<img class="w-full h-full object-cover" data-alt="Close-up macro photography of handwritten university examination paper on ruled blue ledger lines with blue ballpoint ink and red teacher grading annotations" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBKODvJOemRV_y3uJwIYfZAisR0ze3d5XS40QfUW3OetoZx8dHojoOdBJEjTe_xMTQuWLlwA-HyVE3T26RPPygELK_DDqcwB-js-Yztq_ns040BvV7rt7rad4lRzfCbzE_wAjrI7_EQmt6o9DGCny_tatN6SwJPcYJFMev9vRxwfFb_cRYcvNdLPB8TlpkJw80xp6-9YFM00TVtRJrPtrzV8N7vk4u1OL1Hgp9y0KXaXDivx3qm3QOd"/>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-space-sm">
+<span class="font-mono-metric text-mono-metric text-primary">UTS_IF3210_13520084_Lembar1.jpg</span>
+<span class="font-label-sm text-label-sm px-1.5 py-0.5 bg-surface-container text-on-surface-variant border border-outline-variant">4.8 MB</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Mahasiswa: Mochammad Fakhri • NIM: 13520084 • 842 Glif Terpetakan</span>
+</div>
+</div>
+<div class="flex items-center gap-space-sm w-full md:w-auto justify-end">
+<button class="px-space-md py-1.5 font-label-md text-label-md border border-outline-variant text-on-surface-variant hover:text-on-surface" id="btn-cancel-specimen" type="button">
+            Ganti Berkas
+          </button>
+<button class="px-space-md py-1.5 font-label-md text-label-md bg-primary text-on-primary border border-primary hover:bg-primary-container" id="btn-run-full-analysis" type="button">
+            Jalankan Audit Lengkap
+          </button>
+</div>
+</div>
+</div>
+<!-- Minimalist Working Principle / Cara Kerja Forensik -->
+<div class="w-full flex flex-col gap-space-sm">
+<div class="border-b border-outline-variant pb-space-xs">
+<h2 class="font-headline-sm text-headline-sm text-primary">Protokol Deteksi Tulisan Tangan Komputasional</h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-0 border border-outline-variant bg-surface-container-low divide-y md:divide-y-0 md:divide-x divide-outline-variant">
+<!-- Prinsip 1 -->
+<div class="p-space-lg flex flex-col">
+<div class="flex items-center gap-space-sm mb-space-sm text-primary">
+<span class="material-symbols-outlined text-[20px]">font_download</span>
+<h3 class="font-headline-sm text-[1.125rem] leading-6 text-primary">Pola Keragaman Glif (Glyph Variance)</h3>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant">
+            Mendeteksi apakah pengulangan huruf yang identik (seperti alograf ‘a’, ‘e’, ‘g’) memiliki variasi sudut dan tekanan pena mikro alami, atau identik sempurna layaknya output font digital sintetis Calligraphr / vFont.
+          </p>
+<div class="mt-space-md pt-space-sm border-t border-outline-variant flex items-center justify-between">
+<span class="font-mono-metric text-mono-metric text-on-surface-variant">METRIK UJI</span>
+<span class="font-mono-metric text-mono-metric text-primary">Dynamic Time Warping (DTW)</span>
+</div>
+</div>
+<!-- Prinsip 2 -->
+<div class="p-space-lg flex flex-col">
+<div class="flex items-center gap-space-sm mb-space-sm text-primary">
+<span class="material-symbols-outlined text-[20px]">reorder</span>
+<h3 class="font-headline-sm text-[1.125rem] leading-6 text-primary">Fluktuasi Baseline &amp; Spasi</h3>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant">
+            Memeriksa konsistensi tarikan kalimat terhadap garis kertas notebook. Tangan biologis manusia mengalami keletihan otot motorik (muscle drift), sedangkan plotter AI mempertahankan linearitas kaku tanpa deviasi gravitasi.
+          </p>
+<div class="mt-space-md pt-space-sm border-t border-outline-variant flex items-center justify-between">
+<span class="font-mono-metric text-mono-metric text-on-surface-variant">METRIK UJI</span>
+<span class="font-mono-metric text-primary">Hough Transform Linearity</span>
+</div>
+</div>
+<!-- Prinsip 3 -->
+<div class="p-space-lg flex flex-col">
+<div class="flex items-center gap-space-sm mb-space-sm text-primary">
+<span class="material-symbols-outlined text-[20px]">draw</span>
+<h3 class="font-headline-sm text-[1.125rem] leading-6 text-primary">Dinamika Tinta &amp; Ketebalan</h3>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant">
+            Menganalisis saturasi pigmen di titik henti pena (pen-stops), penekanan awal (landing points), dan retakan serat kertas. Mesin plotter mekanik menghasilkan ketebalan garis konstan dengan ujung garis tumpul tak natural.
+          </p>
+<div class="mt-space-md pt-space-sm border-t border-outline-variant flex items-center justify-between">
+<span class="font-mono-metric text-mono-metric text-on-surface-variant">METRIK UJI</span>
+<span class="font-mono-metric text-mono-metric text-primary">Gradient Density Profile</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Log Aktivitas Pemeriksaan Terakhir -->
+<div class="w-full flex flex-col gap-space-sm mt-space-md">
+<div class="flex flex-col sm:flex-row sm:items-baseline justify-between border-b border-outline-variant pb-space-xs gap-space-xs">
+<div>
+<h2 class="font-headline-sm text-headline-sm text-primary">Buku Catatan Pemeriksaan Terkini</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Riwayat uji forensik naskah mahasiswa oleh Departemen Ilmu Komputer</p>
+</div>
+<div class="flex items-center gap-space-sm">
+<span class="font-mono-metric text-mono-metric text-on-surface-variant">TOTAL DIAUDIT HARI INI: 42 LEMBAR</span>
+</div>
+</div>
+<!-- Ledger Table -->
+<div class="w-full overflow-x-auto border border-outline-variant bg-surface-container-lowest">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b-2 border-outline-variant bg-surface-container">
+<th class="py-space-sm px-space-md font-mono-metric text-mono-metric text-on-surface-variant uppercase">Waktu Uji</th>
+<th class="py-space-sm px-space-md font-mono-metric text-mono-metric text-on-surface-variant uppercase">Identitas Mahasiswa</th>
+<th class="py-space-sm px-space-md font-mono-metric text-mono-metric text-on-surface-variant uppercase">Naskah Tugas</th>
+<th class="py-space-sm px-space-md font-mono-metric text-mono-metric text-on-surface-variant uppercase">Indeks Keseragaman</th>
+<th class="py-space-sm px-space-md font-mono-metric text-mono-metric text-on-surface-variant uppercase">Status Verifikasi</th>
+<th class="py-space-sm px-space-md font-mono-metric text-mono-metric text-on-surface-variant uppercase text-right">Tindakan</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant font-body-sm text-body-sm">
+<!-- Item 1: Authentic -->
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-space-sm px-space-md font-mono-metric text-mono-metric text-on-surface-variant">10:42:15 WIB</td>
+<td class="py-space-sm px-space-md">
+<div class="flex flex-col">
+<span class="text-primary font-medium">Bagas Pratama</span>
+<span class="font-mono-metric text-mono-metric text-on-surface-variant">NIM 13521045</span>
+</div>
+</td>
+<td class="py-space-sm px-space-md text-on-surface-variant">UTS Algoritma Lanjut • Lembar 1</td>
+<td class="py-space-sm px-space-md">
+<div class="flex items-center gap-space-xs">
+<div class="w-16 bg-surface-container-high h-1.5">
+<div class="bg-tertiary-container h-1.5" style="width: 14%"></div>
+</div>
+<span class="font-mono-metric text-mono-metric text-on-surface">14.2%</span>
+</div>
+</td>
+<td class="py-space-sm px-space-md">
+<span class="inline-flex items-center px-2 py-0.5 border border-tertiary-container/30 bg-tertiary-fixed/30 text-tertiary font-label-sm text-label-sm">
+                  [ OTENTIK: VARIASI TANGAN WAJAR ]
+                </span>
+</td>
+<td class="py-space-sm px-space-md text-right">
+<button class="font-label-sm text-label-sm text-primary underline hover:text-primary-container" type="button">Lihat Berkas</button>
+</td>
+</tr>
+<!-- Item 2: Flagged Synthetic -->
+<tr class="hover:bg-secondary-fixed/10 transition-colors bg-secondary-fixed/5">
+<td class="py-space-sm px-space-md font-mono-metric text-mono-metric text-on-surface-variant">10:35:02 WIB</td>
+<td class="py-space-sm px-space-md">
+<div class="flex flex-col">
+<span class="text-primary font-medium">Rafi Aditya</span>
+<span class="font-mono-metric text-mono-metric text-secondary font-semibold">NIM 13521102</span>
+</div>
+</td>
+<td class="py-space-sm px-space-md text-on-surface-variant">Tugas Mandiri Pembuktian Teorema</td>
+<td class="py-space-sm px-space-md">
+<div class="flex items-center gap-space-xs">
+<div class="w-16 bg-surface-container-high h-1.5">
+<div class="bg-secondary h-1.5" style="width: 96%"></div>
+</div>
+<span class="font-mono-metric text-mono-metric text-secondary font-bold">96.8%</span>
+</div>
+</td>
+<td class="py-space-sm px-space-md">
+<span class="inline-flex items-center px-2 py-0.5 border border-secondary bg-error-container text-secondary font-label-sm text-label-sm font-semibold">
+                  [ ANOMALI: POLA SINTETIS / PLOTTER AI ]
+                </span>
+</td>
+<td class="py-space-sm px-space-md text-right">
+<button class="font-label-sm text-label-sm text-secondary font-semibold underline hover:text-on-secondary-container" type="button">Periksa Pelanggaran</button>
+</td>
+</tr>
+<!-- Item 3: Authentic -->
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-space-sm px-space-md font-mono-metric text-mono-metric text-on-surface-variant">09:58:44 WIB</td>
+<td class="py-space-sm px-space-md">
+<div class="flex flex-col">
+<span class="text-primary font-medium">Siti Nurhaliza Putri</span>
+<span class="font-mono-metric text-mono-metric text-on-surface-variant">NIM 13521019</span>
+</div>
+</td>
+<td class="py-space-sm px-space-md text-on-surface-variant">UTS Algoritma Lanjut • Lembar 2</td>
+<td class="py-space-sm px-space-md">
+<div class="flex items-center gap-space-xs">
+<div class="w-16 bg-surface-container-high h-1.5">
+<div class="bg-tertiary-container h-1.5" style="width: 18%"></div>
+</div>
+<span class="font-mono-metric text-mono-metric text-on-surface">18.5%</span>
+</div>
+</td>
+<td class="py-space-sm px-space-md">
+<span class="inline-flex items-center px-2 py-0.5 border border-tertiary-container/30 bg-tertiary-fixed/30 text-tertiary font-label-sm text-label-sm">
+                  [ OTENTIK: VARIASI TANGAN WAJAR ]
+                </span>
+</td>
+<td class="py-space-sm px-space-md text-right">
+<button class="font-label-sm text-label-sm text-primary underline hover:text-primary-container" type="button">Lihat Berkas</button>
+</td>
+</tr>
+<!-- Item 4: Flagged Synthetic -->
+<tr class="hover:bg-secondary-fixed/10 transition-colors bg-secondary-fixed/5">
+<td class="py-space-sm px-space-md font-mono-metric text-mono-metric text-on-surface-variant">09:12:10 WIB</td>
+<td class="py-space-sm px-space-md">
+<div class="flex flex-col">
+<span class="text-primary font-medium">Dimas Arya Wicaksana</span>
+<span class="font-mono-metric text-mono-metric text-secondary font-semibold">NIM 13520149</span>
+</div>
+</td>
+<td class="py-space-sm px-space-md text-on-surface-variant">Laporan Praktikum Kompleksitas Waktu</td>
+<td class="py-space-sm px-space-md">
+<div class="flex items-center gap-space-xs">
+<div class="w-16 bg-surface-container-high h-1.5">
+<div class="bg-secondary h-1.5" style="width: 91%"></div>
+</div>
+<span class="font-mono-metric text-mono-metric text-secondary font-bold">91.4%</span>
+</div>
+</td>
+<td class="py-space-sm px-space-md">
+<span class="inline-flex items-center px-2 py-0.5 border border-secondary bg-error-container text-secondary font-label-sm text-label-sm font-semibold">
+                  [ ANOMALI: POLA SINTETIS / PLOTTER AI ]
+                </span>
+</td>
+<td class="py-space-sm px-space-md text-right">
+<button class="font-label-sm text-label-sm text-secondary font-semibold underline hover:text-on-secondary-container" type="button">Periksa Pelanggaran</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Ledger Footer Subtext -->
+<div class="flex items-center justify-between py-space-xs text-on-surface-variant font-body-sm text-body-sm">
+<span>Menampilkan 4 dari 42 berkas terverifikasi sesi ini.</span>
+<a class="font-label-sm text-label-sm text-primary font-medium hover:underline" href="#">Lihat Buku Registrasi Lengkap • Arsip Pengujian</a>
+</div>
+</div>
+</div>
+</div>
+<script>
+  // Client-side interactions for the Forensic Drop Desk
+  (function() {
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('file-input');
+    const demoBtn = document.getElementById('btn-demo');
+    const uploadProgress = document.getElementById('upload-progress');
+    const progressBarFill = document.getElementById('progress-bar-fill');
+    const progressPhase = document.getElementById('progress-phase');
+    const specimenCard = document.getElementById('specimen-card');
+    const btnCancel = document.getElementById('btn-cancel-specimen');
+    const btnModeSingle = document.getElementById('mode-single');
+    const btnModeBatch = document.getElementById('mode-batch');
+
+    // Batch vs Single Toggle
+    btnModeSingle.addEventListener('click', () => {
+      btnModeSingle.classList.add('bg-surface-container-lowest', 'text-primary', 'font-semibold', 'shadow-sm');
+      btnModeSingle.classList.remove('text-on-surface-variant');
+      btnModeBatch.classList.remove('bg-surface-container-lowest', 'text-primary', 'font-semibold', 'shadow-sm');
+      btnModeBatch.classList.add('text-on-surface-variant');
+    });
+
+    btnModeBatch.addEventListener('click', () => {
+      btnModeBatch.classList.add('bg-surface-container-lowest', 'text-primary', 'font-semibold', 'shadow-sm');
+      btnModeBatch.classList.remove('text-on-surface-variant');
+      btnModeSingle.classList.remove('bg-surface-container-lowest', 'text-primary', 'font-semibold', 'shadow-sm');
+      btnModeSingle.classList.add('text-on-surface-variant');
+    });
+
+    // Simulated Analysis Execution
+    function triggerSimulation(filename) {
+      uploadProgress.classList.remove('hidden');
+      uploadProgress.classList.add('flex');
+      progressBarFill.style.width = '0%';
+      progressPhase.innerText = 'Melakukan pra-pemrosesan kontras & ekstraksi glif...';
+
+      setTimeout(() => {
+        progressBarFill.style.width = '35%';
+        progressPhase.innerText = 'Mengukur variasi mikro sudut goresan pena & baseline...';
+      }, 500);
+
+      setTimeout(() => {
+        progressBarFill.style.width = '75%';
+        progressPhase.innerText = 'Menghitung matriks koefisien Fourier dan kerning...';
+      }, 1100);
+
+      setTimeout(() => {
+        progressBarFill.style.width = '100%';
+        progressPhase.innerText = 'Selesai: Lembar siap untuk inspeksi rinci.';
+      }, 1600);
+
+      setTimeout(() => {
+        uploadProgress.classList.add('hidden');
+        uploadProgress.classList.remove('flex');
+        specimenCard.classList.remove('hidden');
+      }, 1900);
+    }
+
+    // Demo Sample click
+    demoBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      triggerSimulation('UTS_Sample_Demo.jpg');
+    });
+
+    // File input trigger
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files && e.target.files.length > 0) {
+        triggerSimulation(e.target.files[0].name);
+      }
+    });
+
+    // Cancel / Clear specimen
+    btnCancel.addEventListener('click', () => {
+      specimenCard.classList.add('hidden');
+      fileInput.value = '';
+    });
+
+    // Drag-over visual cue
+    ['dragenter', 'dragover'].forEach(eventName => {
+      dropZone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        dropZone.classList.add('border-primary', 'bg-surface-container-high');
+      }, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+      dropZone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('border-primary', 'bg-surface-container-high');
+      }, false);
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+      const dt = e.dataTransfer;
+      const files = dt.files;
+      if (files && files.length > 0) {
+        triggerSimulation(files[0].name);
+      }
+    });
+  })();
+</script></main><footer class="w-full bg-surface-container-low border-t border-outline-variant mt-auto"><div class="w-full px-margin py-space-md flex flex-col md:flex-row items-center justify-between gap-space-sm"><div class="flex items-center gap-space-md text-on-surface-variant font-label-sm text-label-sm"><span>AsliTulis • Platform Audit Forensik Tulisan Tangan &amp; Plotter AI</span><span class="hidden md:inline">•</span><span class="hidden md:inline font-mono-metric text-mono-metric">STANDAR VERIFIKASI AKADEMIK INDONESIA</span></div><div class="font-mono-metric text-mono-metric text-on-surface-variant uppercase tracking-wider">Protokol Pemeriksaan Terenkripsi • Lab Forensik Digital</div></div></footer></body></html>
