@@ -333,7 +333,12 @@
     DOM.comparatorTestBadge = document.getElementById('comparator-test-badge');
     DOM.comparatorTestImg = document.getElementById('comparator-test-img');
     DOM.comparatorTestNcc = document.getElementById('comparator-test-ncc');
+    DOM.comparatorRefTag = document.getElementById('comparator-ref-tag');
+    DOM.comparatorRefTitle = document.getElementById('comparator-ref-title');
+    DOM.comparatorRefBadge = document.getElementById('comparator-ref-badge');
     DOM.comparatorRefImg = document.getElementById('comparator-ref-img');
+    DOM.comparatorRefMetricLabel = document.getElementById('comparator-ref-metric-label');
+    DOM.comparatorRefMetricVal = document.getElementById('comparator-ref-metric-val');
 
     // Quick Specimen buttons
     DOM.specimenChoiceBtns = document.querySelectorAll('.btn-specimen-choice');
@@ -757,6 +762,41 @@
       const nccVal = data.metrics ? data.metrics.glyph_similarity : `${data.probability}%`;
       DOM.comparatorTestNcc.textContent = isAuthentic ? `${nccVal} (Variasi Alami)` : `${nccVal} (Identik Kembar)`;
       DOM.comparatorTestNcc.className = isAuthentic ? 'font-bold text-tertiary' : 'font-bold text-secondary';
+    }
+
+    // Dynamic Forensic Contrast for Reference Specimen (Right Panel):
+    // - If current specimen is Authentic: Show Synthetic Plotter Font (Caveat) so examiner sees how human writing differs from mechanical font.
+    // - If current specimen is Synthetic: Show Authentic Human Handwriting so examiner sees rigid glyph cloning vs organic human variation.
+    if (DOM.comparatorRefTag && DOM.comparatorRefImg) {
+      if (isAuthentic) {
+        DOM.comparatorRefTag.textContent = 'PEMBANDING SINTETIS';
+        DOM.comparatorRefTag.className = 'font-mono-metric text-[10px] bg-secondary text-white px-2 py-0.5 font-bold';
+        if (DOM.comparatorRefTitle) DOM.comparatorRefTitle.textContent = 'Font Plotter Mekanis (Caveat)';
+        if (DOM.comparatorRefBadge) {
+          DOM.comparatorRefBadge.textContent = 'TERINDIKASI SINTETIS';
+          DOM.comparatorRefBadge.className = 'font-mono-metric text-[10px] px-2 py-0.5 bg-secondary-fixed text-on-secondary-fixed-variant font-bold border border-secondary/30';
+        }
+        DOM.comparatorRefImg.src = 'assets/samples/sample_fake_caveat.jpg';
+        if (DOM.comparatorRefMetricLabel) DOM.comparatorRefMetricLabel.textContent = 'Karakteristik Plotter:';
+        if (DOM.comparatorRefMetricVal) {
+          DOM.comparatorRefMetricVal.textContent = 'Korelasi 99.8% (Identik Kaku)';
+          DOM.comparatorRefMetricVal.className = 'font-bold text-secondary';
+        }
+      } else {
+        DOM.comparatorRefTag.textContent = 'REFERENSI OTENTIK';
+        DOM.comparatorRefTag.className = 'font-mono-metric text-[10px] bg-tertiary text-white px-2 py-0.5 font-bold';
+        if (DOM.comparatorRefTitle) DOM.comparatorRefTitle.textContent = 'Tulisan Biologis Mahasiswa';
+        if (DOM.comparatorRefBadge) {
+          DOM.comparatorRefBadge.textContent = 'LOLOS (OTENTIK)';
+          DOM.comparatorRefBadge.className = 'font-mono-metric text-[10px] px-2 py-0.5 bg-tertiary-fixed text-tertiary font-bold border border-tertiary/30';
+        }
+        DOM.comparatorRefImg.src = 'assets/samples/sample_real_user.jpg';
+        if (DOM.comparatorRefMetricLabel) DOM.comparatorRefMetricLabel.textContent = 'Karakteristik Motorik:';
+        if (DOM.comparatorRefMetricVal) {
+          DOM.comparatorRefMetricVal.textContent = 'Entropi 41% (Dinamis Alami)';
+          DOM.comparatorRefMetricVal.className = 'font-bold text-tertiary';
+        }
+      }
     }
 
     // Update Probability & Verdict Card
