@@ -139,8 +139,8 @@ def evaluate_image_bytes(contents: bytes, filename: str = "specimen.jpg") -> Dic
     # Format dynamic SVG annotations with comfortable breathable padding
     svg_elements = []
     legend_items = []
-    pad_x = 2
-    pad_y = 3
+    pad_x = 3
+    pad_y = 4
     
     for i, pair in enumerate(top_pairs):
         pin = pair["pin"]
