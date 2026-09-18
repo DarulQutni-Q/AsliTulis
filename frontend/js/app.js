@@ -54,11 +54,10 @@
       imageSrc: 'assets/samples/sample_fake_caveat.jpg',
       viewBox: '0 0 1006 1245',
       metrics: {
+        glyph_similarity: '99.8%',
         entropy: '12% (Rendah)',
-        pressure: 'Monoton',
-        baseline: '99.4% Kaku',
-        slant: '± 0.4° Tetap',
-        penlifts: 'Absen'
+        pressure: 'Monoton Mekanis',
+        baseline: '99.4% Kaku'
       },
       legend: [
         { pin: '①', label: "Korelasi Glif 'a/k': <strong>99.8%</strong>", pair: 'glif-1' },
@@ -119,11 +118,10 @@
       imageSrc: 'assets/samples/sample_fake_dekko.jpg',
       viewBox: '0 0 982 1207',
       metrics: {
+        glyph_similarity: '99.5%',
         entropy: '8% (Sangat Rendah)',
         pressure: 'Monoton Linier',
-        baseline: '99.8% Kaku',
-        slant: '± 0.2° Tetap',
-        penlifts: 'Absen Sempurna'
+        baseline: '99.8% Kaku'
       },
       legend: [
         { pin: '①', label: "Alograf Sintetis 'data': <strong>99.5%</strong>", pair: 'glif-1' },
@@ -173,11 +171,10 @@
       imageSrc: 'assets/samples/sample_fake_mali.jpg',
       viewBox: '0 0 977 1225',
       metrics: {
+        glyph_similarity: '99.3%',
         entropy: '11% (Sangat Rendah)',
         pressure: 'Monoton Mekanis',
-        baseline: '99.6% Kaku',
-        slant: '± 0.3° Tetap',
-        penlifts: 'Absen (Plotter G-Code)'
+        baseline: '99.6% Kaku'
       },
       legend: [
         { pin: '①', label: "Glif Identik 'spektro': <strong>99.6%</strong>", pair: 'glif-1' },
@@ -207,6 +204,51 @@
           </g>
         </g>
       `
+    },
+    user_handwriting: {
+      caseId: 'BAF/OTENTIK/2026/90C8481A',
+      course: 'Sistem Operasi & Komputer',
+      studentName: 'Tulisan Tangan Asli Mahasiswa',
+      studentNim: '13522032',
+      classYear: 'Semester Ganjil 2026',
+      deskNo: 'Meja Ujian C-04',
+      scanRes: '1280 × 1600 piksel (300 DPI)',
+      submitTime: '18 September 2026, 10:17 WIB',
+      sha256: '90c8481a48712b083c5803d0540429f749710ae550cf6e20fc610f5af3bf9b10',
+      probability: 97,
+      statusLabel: 'LOLOS (OTENTIK)',
+      verdictType: 'authentic',
+      verdictText: 'Otentik: Variasi Biologis Motorik Manusia Wajar',
+      recommendation: 'Hasil verifikasi menunjukkan variasi motorik biologis alami yang dominan (entropi bentuk 41.1% dan baseline organik 53.6%). Kesamaan bentuk minor pada beberapa huruf merupakan kebetulan motorik wajar manusia, bukan cetakan font berulang.',
+      imageSrc: 'assets/samples/sample_real_user.jpg',
+      viewBox: '0 0 1280 1600',
+      metrics: {
+        glyph_similarity: '85.5%',
+        entropy: '41.1% (Variatif)',
+        pressure: 'Dinamis Alami (CV 0.59)',
+        baseline: '53.6% Organik'
+      },
+      legend: [
+        { pin: '①', label: "Variasi Glif: <strong>85.5%</strong>", pair: 'bio-1' },
+        { pin: '②', label: "Tekanan Tinta: <strong>CV 0.59</strong>", pair: 'bio-2' },
+        { pin: '③', label: "Baseline Organik: <strong>53.6%</strong>", pair: 'bio-3' }
+      ],
+      svgAnnotations: `
+        <g class="glyph-group" data-pair="bio-1" data-label="Variasi Motorik Manusia Alami • Deviasi Wajar">
+          <rect class="forensic-rect" x="1001" y="971" width="19" height="46" rx="2"></rect>
+          <g class="forensic-pin" transform="translate(1020, 971)">
+            <circle r="8"></circle>
+            <text>①</text>
+          </g>
+        </g>
+        <g class="glyph-group" data-pair="bio-1" data-label="Alograf Pembanding: Fluktuasi Bentuk Biologis">
+          <rect class="forensic-rect" x="1161" y="983" width="19" height="39" rx="2"></rect>
+          <g class="forensic-pin" transform="translate(1180, 983)">
+            <circle r="8"></circle>
+            <text>①</text>
+          </g>
+        </g>
+      `
     }
   };
 
@@ -216,9 +258,9 @@
   function init() {
     cacheDOM();
     bindEvents();
+    renderArchiveTable();
     renderSpecimen('caveat');
     setupLoupe();
-    updateExaminerBadge();
   }
 
   function cacheDOM() {
@@ -230,17 +272,8 @@
       'arsip-pengujian': document.getElementById('view-arsip-pengujian')
     };
 
-    // Examiner Profile
-    DOM.btnOpenExaminerModal = document.getElementById('btn-open-examiner-modal');
-    DOM.examinerModal = document.getElementById('examiner-modal');
-    DOM.btnCloseExaminerModal = document.getElementById('btn-close-examiner-modal');
-    DOM.formExaminer = document.getElementById('form-examiner');
-    DOM.inputExaminerName = document.getElementById('input-examiner-name');
-    DOM.inputExaminerNip = document.getElementById('input-examiner-nip');
-    DOM.inputExaminerInst = document.getElementById('input-examiner-inst');
-    DOM.btnResetGuest = document.getElementById('btn-reset-guest');
-    DOM.headerExaminerName = document.getElementById('header-examiner-name');
-    DOM.headerExaminerRole = document.getElementById('header-examiner-role');
+    // Header Quick Actions
+    DOM.btnHeaderNewUpload = document.getElementById('btn-header-new-upload');
 
     // Upload & Scanning (View 1)
     DOM.dropZone = document.getElementById('drop-zone');
@@ -276,6 +309,10 @@
     // Quick Specimen buttons
     DOM.specimenChoiceBtns = document.querySelectorAll('.btn-specimen-choice');
 
+    // Action buttons & Clipboard
+    DOM.btnCopySummary = document.getElementById('btn-copy-summary');
+    DOM.labelCopySummary = document.getElementById('label-copy-summary');
+
     // Report Modal
     DOM.btnPrintReport = document.getElementById('btn-print-report');
     DOM.reportModal = document.getElementById('report-modal');
@@ -291,7 +328,10 @@
     // Archive Search & Filters (View 3)
     DOM.archiveSearch = document.getElementById('archive-search');
     DOM.archiveFilter = document.getElementById('archive-filter');
-    DOM.archiveRows = document.querySelectorAll('.archive-row');
+    DOM.archiveTbody = document.getElementById('archive-tbody');
+    DOM.archiveStatTotal = document.getElementById('archive-stat-total');
+    DOM.archiveStatSuspect = document.getElementById('archive-stat-suspect');
+    DOM.archiveStatAuthentic = document.getElementById('archive-stat-authentic');
   }
 
   function bindEvents() {
@@ -312,7 +352,7 @@
         const view = navTarget.getAttribute('data-nav');
         const caseType = navTarget.getAttribute('data-case');
         if (caseType === 'authentic') {
-          renderSpecimen('mali');
+          renderSpecimen('user_handwriting');
         } else if (caseType === 'synthetic') {
           renderSpecimen('caveat');
         }
@@ -320,54 +360,37 @@
       }
     });
 
-    // Examiner Modal Open / Close / Submit
-    if (DOM.btnOpenExaminerModal) {
-      DOM.btnOpenExaminerModal.addEventListener('click', () => {
-        DOM.examinerModal.classList.add('open');
+    // Header New Upload button
+    if (DOM.btnHeaderNewUpload) {
+      DOM.btnHeaderNewUpload.addEventListener('click', () => {
+        if (DOM.specimenCard) DOM.specimenCard.classList.add('hidden');
+        if (DOM.dropZone) DOM.dropZone.classList.remove('hidden');
+        state.uploadedImageSrc = null;
+        state.uploadedFileMeta = null;
+        if (DOM.fileInput) DOM.fileInput.value = '';
+        switchView('pemeriksaan-berkas');
+        setTimeout(() => {
+          if (DOM.fileInput) DOM.fileInput.click();
+        }, 120);
       });
     }
 
-    if (DOM.btnCloseExaminerModal) {
-      DOM.btnCloseExaminerModal.addEventListener('click', () => {
-        DOM.examinerModal.classList.remove('open');
-      });
-    }
-
-    if (DOM.examinerModal) {
-      DOM.examinerModal.addEventListener('click', e => {
-        if (e.target === DOM.examinerModal) DOM.examinerModal.classList.remove('open');
-      });
-    }
-
-    if (DOM.formExaminer) {
-      DOM.formExaminer.addEventListener('submit', e => {
-        e.preventDefault();
-        const nameVal = (DOM.inputExaminerName.value || '').trim();
-        const nipVal = (DOM.inputExaminerNip.value || '').trim();
-        const instVal = (DOM.inputExaminerInst.value || '').trim();
-
-        if (nameVal) {
-          state.examiner.name = nameVal;
-          state.examiner.nip = nipVal || '-';
-          state.examiner.inst = instVal || 'Laboratorium Forensik Akademik';
-          state.examiner.isGuest = false;
-        }
-        updateExaminerBadge();
-        DOM.examinerModal.classList.remove('open');
-      });
-    }
-
-    if (DOM.btnResetGuest) {
-      DOM.btnResetGuest.addEventListener('click', () => {
-        state.examiner.name = 'Mode Tamu / Lab Mandiri';
-        state.examiner.nip = 'REG-2024-LAB04';
-        state.examiner.inst = 'Laboratorium Forensik Akademik';
-        state.examiner.isGuest = true;
-        DOM.inputExaminerName.value = 'Tim Evaluator Mandiri';
-        DOM.inputExaminerNip.value = 'REG-2024-LAB04';
-        DOM.inputExaminerInst.value = 'Laboratorium Forensik Akademik';
-        updateExaminerBadge();
-        DOM.examinerModal.classList.remove('open');
+    // Copy Summary to Clipboard
+    if (DOM.btnCopySummary) {
+      DOM.btnCopySummary.addEventListener('click', () => {
+        const data = specimens[state.currentSpecimen] || specimens.caveat;
+        const summaryText = `[ASLITULIS AUDIT FORENSIK]\nNo. Berkas: ${data.caseId}\nStatus: ${data.statusLabel} (${data.verdictType === 'suspect' ? 'Sintetis/Plotter' : 'Otentik'})\nProbabilitas: ${data.probability}%\nKesimpulan: ${data.verdictText}\nEntropi Glif: ${data.metrics ? data.metrics.entropy : '-'}\nTekanan Tinta: ${data.metrics ? data.metrics.pressure : '-'}\nBaseline: ${data.metrics ? data.metrics.baseline : '-'}\nSHA-256: ${data.sha256 || '-'}`;
+        navigator.clipboard.writeText(summaryText).then(() => {
+          if (DOM.labelCopySummary) {
+            const orig = DOM.labelCopySummary.textContent;
+            DOM.labelCopySummary.textContent = 'Tersalin ke Clipboard!';
+            setTimeout(() => {
+              DOM.labelCopySummary.textContent = orig;
+            }, 2000);
+          }
+        }).catch(err => {
+          console.warn('Clipboard error:', err);
+        });
       });
     }
 
@@ -450,6 +473,10 @@
         DOM.labelToggleRuler.textContent = state.rulerVisible
           ? 'Sembunyikan Kisi Garis'
           : 'Tampilkan Kisi Garis';
+        DOM.btnToggleRuler.classList.toggle('bg-primary', state.rulerVisible);
+        DOM.btnToggleRuler.classList.toggle('text-white', state.rulerVisible);
+        DOM.btnToggleRuler.classList.toggle('bg-surface-container-high', !state.rulerVisible);
+        DOM.btnToggleRuler.classList.toggle('text-primary', !state.rulerVisible);
       });
     }
 
@@ -462,6 +489,10 @@
         DOM.labelToggleAnnotations.textContent = state.annotationsVisible
           ? 'Anotasi Forensik: Aktif'
           : 'Anotasi Forensik: Nonaktif';
+        DOM.btnToggleAnnotations.classList.toggle('bg-primary', state.annotationsVisible);
+        DOM.btnToggleAnnotations.classList.toggle('text-white', state.annotationsVisible);
+        DOM.btnToggleAnnotations.classList.toggle('bg-surface-container-high', !state.annotationsVisible);
+        DOM.btnToggleAnnotations.classList.toggle('text-primary', !state.annotationsVisible);
       });
     }
 
@@ -471,11 +502,13 @@
         const loupe = document.getElementById('loupe-lens');
         if (state.loupeActive) {
           DOM.specimenCanvasContainer.classList.add('loupe-mode');
-          DOM.btnToggleLoupe.classList.add('bg-primary-container', 'text-white');
+          DOM.btnToggleLoupe.classList.add('bg-primary', 'text-white');
+          DOM.btnToggleLoupe.classList.remove('bg-surface-container-high', 'text-primary');
           DOM.labelToggleLoupe.textContent = 'Kaca Pembesar: Aktif';
         } else {
           DOM.specimenCanvasContainer.classList.remove('loupe-mode');
-          DOM.btnToggleLoupe.classList.remove('bg-primary-container', 'text-white');
+          DOM.btnToggleLoupe.classList.remove('bg-primary', 'text-white');
+          DOM.btnToggleLoupe.classList.add('bg-surface-container-high', 'text-primary');
           DOM.labelToggleLoupe.textContent = 'Kaca Pembesar (2.5x)';
           if (loupe) loupe.style.display = 'none';
         }
@@ -484,7 +517,7 @@
 
     if (DOM.btnSwitchCase) {
       DOM.btnSwitchCase.addEventListener('click', () => {
-        const nextChoice = state.currentCase === 'synthetic' ? 'mali' : 'caveat';
+        const nextChoice = state.currentCase === 'synthetic' ? 'user_handwriting' : 'caveat';
         renderSpecimen(nextChoice);
       });
     }
@@ -503,7 +536,11 @@
     }
     if (DOM.btnExecutePrint) {
       DOM.btnExecutePrint.addEventListener('click', () => {
+        document.body.classList.add('printing-report');
         window.print();
+        setTimeout(() => {
+          document.body.classList.remove('printing-report');
+        }, 1000);
       });
     }
 
@@ -610,13 +647,15 @@
     const elStudentHeader = document.getElementById('exam-student-header');
     const elVerdictPill = document.getElementById('doc-verdict-pill');
 
+    const isAuthentic = data.verdictType !== 'suspect';
+
     if (elCaseId) elCaseId.textContent = data.caseId;
     if (elCourse) elCourse.textContent = data.course;
     if (elStatusBadge) {
       elStatusBadge.textContent = data.statusLabel;
-      elStatusBadge.className = data.verdictType === 'suspect'
-        ? 'font-mono-metric text-[11px] px-2 py-0.5 bg-secondary-fixed text-on-secondary-fixed-variant font-bold'
-        : 'font-mono-metric text-[11px] px-2 py-0.5 bg-tertiary-fixed text-tertiary font-bold';
+      elStatusBadge.className = isAuthentic
+        ? 'font-mono-metric text-[11px] px-2.5 py-0.5 bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold'
+        : 'font-mono-metric text-[11px] px-2.5 py-0.5 bg-secondary-fixed text-on-secondary-fixed-variant font-bold';
     }
     if (elDocTitle) {
       elDocTitle.textContent = specimenKey === 'user'
@@ -627,65 +666,91 @@
       elStudentHeader.innerHTML = `Mahasiswa: <strong>${data.studentName}</strong> • NIM: <strong>${data.studentNim}</strong> • Resolusi: ${data.scanRes}`;
     }
     if (elVerdictPill) {
-      elVerdictPill.textContent = data.verdictType === 'suspect' ? 'TERINDIKASI FONT' : 'LOLOS (OTENTIK)';
-      elVerdictPill.className = data.verdictType === 'suspect'
-        ? 'font-mono-metric text-[10px] px-2 py-0.5 bg-secondary-fixed text-on-secondary-fixed-variant font-bold border border-secondary/30'
-        : 'font-mono-metric text-[10px] px-2 py-0.5 bg-tertiary-fixed text-tertiary font-bold border border-tertiary/30';
+      elVerdictPill.textContent = isAuthentic ? 'LOLOS (OTENTIK)' : 'TERINDIKASI FONT';
+      elVerdictPill.className = isAuthentic
+        ? 'font-mono-metric text-[10px] px-2.5 py-0.5 bg-emerald-100 text-emerald-800 font-bold border border-emerald-300'
+        : 'font-mono-metric text-[10px] px-2.5 py-0.5 bg-secondary-fixed text-on-secondary-fixed-variant font-bold border border-secondary/30';
     }
 
     // Update Switch Case Button
     if (DOM.labelSwitchCase) {
-      DOM.labelSwitchCase.textContent = data.verdictType === 'suspect'
-        ? 'Uji Sampel Otentik (Bagas Pratama)'
-        : 'Uji Sampel Plotter (Ahmad Fauzan)';
+      DOM.labelSwitchCase.textContent = isAuthentic
+        ? 'Uji Sampel Plotter (Ahmad Fauzan)'
+        : 'Uji Sampel Otentik (Bagas Pratama)';
     }
 
     // Update Probability & Verdict Card
     const elProbText = document.getElementById('prob-number');
+    const elProbLabel = document.getElementById('prob-label');
+    const elProbTolerance = document.getElementById('prob-tolerance');
     const elProbBar = document.getElementById('prob-bar');
     const elProbRec = document.getElementById('prob-recommendation');
     const elRiskBadge = document.getElementById('risk-badge');
 
-    if (elProbText) elProbText.textContent = `${data.probability}%`;
+    if (elProbLabel) {
+      elProbLabel.textContent = isAuthentic
+        ? 'Tingkat Keaslian Naskah (Otentik)'
+        : 'Probabilitas Font Sintetis / Plotter';
+      elProbLabel.className = isAuthentic
+        ? 'font-mono-metric text-xs text-emerald-700 font-bold uppercase tracking-wider'
+        : 'font-mono-metric text-xs text-secondary font-bold uppercase tracking-wider';
+    }
+
+    if (elProbText) {
+      elProbText.textContent = `${data.probability}%`;
+      elProbText.className = isAuthentic
+        ? 'font-display text-4xl text-emerald-600 leading-none mt-1 font-bold'
+        : 'font-display text-4xl text-secondary leading-none mt-1 font-bold';
+    }
+
+    if (elProbTolerance) {
+      elProbTolerance.textContent = isAuthentic
+        ? '≥ 85% Ambang Biologis'
+        : '≤ 15% Disyaratkan';
+      elProbTolerance.className = isAuthentic
+        ? 'font-mono-metric text-xs text-emerald-700 font-semibold mt-0.5'
+        : 'font-mono-metric text-xs text-on-surface mt-0.5';
+    }
+
     if (elProbBar) {
       elProbBar.setAttribute('data-target-width', `${data.probability}%`);
-      elProbBar.style.backgroundColor = data.verdictType === 'suspect' ? 'var(--secondary)' : 'var(--tertiary-container)';
+      elProbBar.style.backgroundColor = isAuthentic ? '#059669' : 'var(--secondary)';
     }
     if (elProbRec) {
       elProbRec.textContent = data.recommendation;
-      elProbRec.style.color = data.verdictType === 'suspect' ? 'var(--secondary)' : 'var(--tertiary)';
+      elProbRec.className = isAuthentic
+        ? 'font-body-sm text-xs font-semibold leading-relaxed text-emerald-800'
+        : 'font-body-sm text-xs font-medium leading-relaxed text-secondary';
     }
     if (elRiskBadge) {
       elRiskBadge.textContent = data.statusLabel;
-      elRiskBadge.className = data.verdictType === 'suspect'
-        ? 'px-2 py-0.5 bg-secondary-fixed text-on-secondary-fixed-variant font-mono-metric text-xs font-bold'
-        : 'px-2 py-0.5 bg-tertiary-fixed text-tertiary font-mono-metric text-xs font-bold';
+      elRiskBadge.className = isAuthentic
+        ? 'px-2.5 py-1 bg-emerald-100 text-emerald-800 border border-emerald-300 font-mono-metric text-xs font-bold'
+        : 'px-2.5 py-1 bg-secondary-fixed text-on-secondary-fixed-variant font-mono-metric text-xs font-bold';
     }
 
-    // Update Metric Values
-    const m = data.metrics;
+    // Update Metric Values (Genuine Calculated CV Parameters)
+    const m = data.metrics || {};
+    const elSimilarity = document.getElementById('val-similarity');
     const elEntropy = document.getElementById('val-entropy');
     const elPressure = document.getElementById('val-pressure');
     const elBaseline = document.getElementById('val-baseline');
-    const elSlant = document.getElementById('val-slant');
-    const elPenlifts = document.getElementById('val-penlifts');
 
+    if (elSimilarity) {
+      elSimilarity.textContent = m.glyph_similarity || '0.0%';
+      elSimilarity.className = `font-mono-metric text-xs font-bold shrink-0 ${isAuthentic ? 'text-emerald-700' : 'text-secondary'}`;
+    }
     if (elEntropy) {
-      elEntropy.textContent = m.entropy;
-      elEntropy.className = `font-mono-metric text-xs font-bold shrink-0 ${data.verdictType === 'suspect' ? 'text-secondary' : 'text-tertiary'}`;
+      elEntropy.textContent = m.entropy || '-';
+      elEntropy.className = `font-mono-metric text-xs font-bold shrink-0 ${isAuthentic ? 'text-emerald-700' : 'text-secondary'}`;
     }
     if (elPressure) {
-      elPressure.textContent = m.pressure;
-      elPressure.className = `font-mono-metric text-xs font-bold shrink-0 ${data.verdictType === 'suspect' ? 'text-secondary' : 'text-tertiary'}`;
+      elPressure.textContent = m.pressure || '-';
+      elPressure.className = `font-mono-metric text-xs font-bold shrink-0 ${isAuthentic ? 'text-emerald-700' : 'text-secondary'}`;
     }
     if (elBaseline) {
-      elBaseline.textContent = m.baseline;
-      elBaseline.className = `font-mono-metric text-xs font-bold shrink-0 ${data.verdictType === 'suspect' ? 'text-secondary' : 'text-tertiary'}`;
-    }
-    if (elSlant) elSlant.textContent = m.slant;
-    if (elPenlifts) {
-      elPenlifts.textContent = m.penlifts;
-      elPenlifts.className = `font-mono-metric text-xs font-bold shrink-0 ${data.verdictType === 'suspect' ? 'text-secondary' : 'text-tertiary'}`;
+      elBaseline.textContent = m.baseline || '-';
+      elBaseline.className = `font-mono-metric text-xs font-bold shrink-0 ${isAuthentic ? 'text-emerald-700' : 'text-secondary'}`;
     }
 
     // Update Metadata Panel
@@ -827,16 +892,34 @@
     DOM.specimenFileSize.textContent = '4.8 MB';
     DOM.specimenCard.classList.remove('hidden');
 
-    try {
-      const resp = await fetch('assets/samples/sample_fake_caveat.jpg');
-      const blob = await resp.blob();
-      const demoFile = new File([blob], demoName, { type: 'image/jpeg' });
-      await triggerRealScanSequence(demoFile);
-    } catch (err) {
-      console.warn('Demo fallback:', err);
-      renderSpecimen('caveat');
-      switchView('lembar-analisis');
-    }
+    state.isScanning = true;
+    DOM.uploadProgress.classList.remove('hidden');
+    DOM.uploadProgress.classList.add('flex', 'scanning');
+
+    const phases = [
+      { progress: 25, text: 'Memindai Kepadatan Karakter & Format Citra...' },
+      { progress: 50, text: 'Melakukan kalibrasi sudut rotasi kertas dan segregasi baris...' },
+      { progress: 75, text: 'Mengekstraksi alograf glif berulang & segmentasi kontur...' },
+      { progress: 100, text: 'Menghitung Dynamic Time Warping (DTW) & Hough Linearity...' }
+    ];
+
+    let currentPhase = 0;
+    const progressTimer = setInterval(() => {
+      if (currentPhase < phases.length) {
+        DOM.progressBarFill.style.width = `${phases[currentPhase].progress}%`;
+        DOM.progressPhase.textContent = phases[currentPhase].text;
+        currentPhase++;
+      } else {
+        clearInterval(progressTimer);
+        setTimeout(() => {
+          DOM.uploadProgress.classList.add('hidden');
+          DOM.uploadProgress.classList.remove('flex', 'scanning');
+          state.isScanning = false;
+          renderSpecimen('caveat');
+          switchView('lembar-analisis');
+        }, 200);
+      }
+    }, 200);
   }
 
   async function triggerRealScanSequence(file) {
@@ -902,6 +985,19 @@
         legend: data.legend,
         svgAnnotations: data.svg_annotations
       };
+
+      // Save to dynamic archive
+      saveToArchive({
+        caseId: specimens.user.caseId,
+        studentName: specimens.user.studentName,
+        nim: specimens.user.studentNim,
+        course: specimens.user.course,
+        dtw: (specimens.user.metrics && specimens.user.metrics.entropy) ? specimens.user.metrics.entropy : `${specimens.user.probability}%`,
+        verdictType: specimens.user.verdictType,
+        statusLabel: specimens.user.statusLabel,
+        specimenKey: 'user',
+        date: 'Hari Ini, ' + new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB'
+      });
 
       setTimeout(() => {
         DOM.uploadProgress.classList.add('hidden');
@@ -1047,13 +1143,13 @@
 
         <div class="mt-6 pt-4 border-t border-outline-variant flex justify-between items-end text-xs">
           <div>
-            <p class="text-on-surface-variant">Sistem Verifikasi Otomatis AsliTulis v1.0</p>
-            <p class="font-mono-metric text-[10px] text-on-surface-variant">Sertifikat forensik sah yang diekstraksi dari citra beresolusi tinggi.</p>
+            <p class="text-on-surface-variant font-medium">Sistem Verifikasi Otomatis AsliTulis v1.0</p>
+            <p class="font-mono-metric text-[10px] text-on-surface-variant">Sertifikat forensik sah diekstraksi dari analisis citra beresolusi tinggi.</p>
           </div>
           <div class="text-center">
-            <p class="mb-7 text-on-surface-variant">Petugas Pemeriksa,</p>
-            <p class="font-bold text-primary underline">${examinerName}</p>
-            <p class="text-[10px] text-on-surface-variant font-mono-metric">NIP / ID: ${examinerNip}</p>
+            <p class="mb-6 text-on-surface-variant">Otorisasi Sistem,</p>
+            <p class="font-bold text-primary underline">AsliTulis Engine Core</p>
+            <p class="text-[10px] text-on-surface-variant font-mono-metric">Verifikator Forensik Digital</p>
           </div>
         </div>
       `;
@@ -1068,7 +1164,140 @@
     }
   }
 
+  // ==========================================
+  // DYNAMIC ARCHIVE (BUKU CATATAN PENGUJIAN)
+  // ==========================================
+  const DEFAULT_ARCHIVE = [
+    {
+      caseId: 'BAF/KOMP/2024/X-1088',
+      studentName: 'Ahmad Fauzan',
+      nim: '13521088',
+      course: 'IF-4020 Teori Komputasi Lanjut',
+      dtw: '12% (Rendah)',
+      verdictType: 'suspect',
+      statusLabel: 'TERINDIKASI SINTETIS',
+      specimenKey: 'caveat',
+      date: '24 Okt 2024'
+    },
+    {
+      caseId: 'BAF/KOMP/2024/X-1045',
+      studentName: 'Rizky Ramadhan',
+      nim: '13521045',
+      course: 'IF-4020 Teori Komputasi Lanjut',
+      dtw: '15% (Rendah)',
+      verdictType: 'suspect',
+      statusLabel: 'TERINDIKASI SINTETIS',
+      specimenKey: 'dekko',
+      date: '24 Okt 2024'
+    },
+    {
+      caseId: 'BAF/KOMP/2024/X-1102',
+      studentName: 'Dian Maharani',
+      nim: '13521102',
+      course: 'IF-4020 Teori Komputasi Lanjut',
+      dtw: '11% (Rendah)',
+      verdictType: 'suspect',
+      statusLabel: 'TERINDIKASI SINTETIS',
+      specimenKey: 'mali',
+      date: '24 Okt 2024'
+    },
+    {
+      caseId: 'BAF/OTEN/2026/U-1002',
+      studentName: 'Bagas Pratama (Asli)',
+      nim: '13521014',
+      course: 'Pemeriksaan Naskah Berkas Ujian',
+      dtw: '41% (Organik)',
+      verdictType: 'authentic',
+      statusLabel: 'LOLOS (OTENTIK)',
+      specimenKey: 'user_handwriting',
+      date: '18 Sep 2026'
+    }
+  ];
+
+  function getArchive() {
+    try {
+      const stored = localStorage.getItem('aslitulis_archive_records');
+      if (stored) {
+        return JSON.parse(stored);
+      }
+    } catch (e) {
+      console.warn('Could not read archive from localStorage:', e);
+    }
+    return DEFAULT_ARCHIVE;
+  }
+
+  function saveToArchive(item) {
+    let list = getArchive();
+    const idx = list.findIndex(x => x.caseId === item.caseId);
+    if (idx >= 0) {
+      list[idx] = item;
+    } else {
+      list.unshift(item);
+    }
+    try {
+      localStorage.setItem('aslitulis_archive_records', JSON.stringify(list));
+    } catch (e) {
+      console.warn('Could not write archive to localStorage:', e);
+    }
+    renderArchiveTable();
+  }
+
+  function renderArchiveTable() {
+    if (!DOM.archiveTbody) return;
+    const list = getArchive();
+    
+    DOM.archiveTbody.innerHTML = list.map(item => `
+      <tr data-status="${item.verdictType}">
+        <td class="font-mono-metric font-bold text-primary">${item.caseId}</td>
+        <td>
+          <div class="font-bold text-primary">${item.studentName}</div>
+          <div class="font-mono-metric text-[10px] text-on-surface-variant">NIM: ${item.nim}</div>
+        </td>
+        <td>
+          <div>${item.course}</div>
+          <div class="font-mono-metric text-[10px] text-on-surface-variant">${item.date || 'Hari Ini'}</div>
+        </td>
+        <td>
+          <div class="font-mono-metric font-bold ${item.verdictType === 'suspect' ? 'text-secondary' : 'text-tertiary'}">${item.dtw}</div>
+          <div class="font-mono-metric text-[10px] text-on-surface-variant">Karakteristik Alograf</div>
+        </td>
+        <td>
+          <span class="inline-block px-2 py-0.5 text-[10px] font-mono-metric font-bold ${item.verdictType === 'suspect' ? 'bg-secondary-fixed text-on-secondary-fixed-variant' : 'bg-tertiary-fixed text-tertiary'}">
+            ${item.statusLabel}
+          </span>
+        </td>
+        <td class="text-right">
+          <button type="button" class="btn-open-archive-item px-2.5 py-1 bg-surface border border-outline-variant hover:bg-surface-container-high text-xs font-mono-metric text-primary transition-colors cursor-pointer" data-specimen="${item.specimenKey || 'caveat'}">
+            Buka Lembar
+          </button>
+        </td>
+      </tr>
+    `).join('');
+
+    // Attach click listeners to Buka Lembar buttons
+    DOM.archiveTbody.querySelectorAll('.btn-open-archive-item').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const key = btn.getAttribute('data-specimen');
+        renderSpecimen(key);
+        switchView('lembar-analisis');
+      });
+    });
+
+    // Cache updated rows for search & filter
+    DOM.archiveRows = DOM.archiveTbody.querySelectorAll('tr');
+
+    // Update statistics counters
+    const total = list.length;
+    const suspect = list.filter(x => x.verdictType === 'suspect').length;
+    const authentic = list.filter(x => x.verdictType === 'authentic').length;
+
+    if (DOM.archiveStatTotal) DOM.archiveStatTotal.textContent = total;
+    if (DOM.archiveStatSuspect) DOM.archiveStatSuspect.textContent = suspect;
+    if (DOM.archiveStatAuthentic) DOM.archiveStatAuthentic.textContent = authentic;
+  }
+
   function filterArchive() {
+    if (!DOM.archiveRows) return;
     const q = (DOM.archiveSearch.value || '').toLowerCase();
     const filter = DOM.archiveFilter.value;
 
@@ -1091,3 +1320,4 @@
   }
 
 })();
+

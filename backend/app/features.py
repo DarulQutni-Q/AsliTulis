@@ -25,29 +25,35 @@ def preprocess_image(img_bgr: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     
     return gray, text_binary
 
-def extract_glyph_candidates(text_binary: np.ndarray, max_glyphs: int = 150) -> List[Dict[str, Any]]:
+def extract_glyph_candidates(text_binary: np.ndarray, max_glyphs: int = 160) -> List[Dict[str, Any]]:
     """
     Finds connected component contours representing character/sub-word glyphs.
-    Filters out extreme noise, speckles, or line fragments.
+    Filters out margins, paper boundaries, and speckles.
     """
+    h_img, w_img = text_binary.shape
+    mx = int(w_img * 0.04) # ignore outer 4% margins
+    my = int(h_img * 0.04)
+    
     contours, _ = cv2.findContours(text_binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     
     glyphs = []
-    h_img, w_img = text_binary.shape
     
     for cnt in contours:
         x, y, w, h = cv2.boundingRect(cnt)
         
-        # Valid character-sized components
-        if 10 <= h <= 90 and 8 <= w <= 120:
+        # Exclude outer paper boundaries, margins, or binder punch holes
+        if x < mx or (x + w) > (w_img - mx) or y < my or (y + h) > (h_img - my):
+            continue
+            
+        # Valid character-sized components (filter out tiny dots, commas, speckles)
+        area = cv2.contourArea(cnt)
+        if 18 <= h <= 95 and 14 <= w <= 130 and area >= 60:
             aspect = w / float(h)
-            if 0.15 <= aspect <= 3.5:
+            if 0.20 <= aspect <= 3.0:
                 # Extract normalized 32x32 glyph patch
                 patch = text_binary[y:y+h, x:x+w]
                 patch_norm = cv2.resize(patch, (32, 32), interpolation=cv2.INTER_AREA)
                 
-                # Area and density
-                area = cv2.contourArea(cnt)
                 density = area / float(w * h) if w * h > 0 else 0
                 
                 glyphs.append({
@@ -55,37 +61,40 @@ def extract_glyph_candidates(text_binary: np.ndarray, max_glyphs: int = 150) -> 
                     "aspect": aspect,
                     "height": h,
                     "width": w,
+                    "area": area,
                     "patch": patch_norm,
                     "density": density,
                     "center": (x + w / 2.0, y + h / 2.0)
                 })
                 
-        if len(glyphs) >= max_glyphs * 2:
-            break
-            
-    # Sort glyphs by position (top-to-bottom, left-to-right)
-    glyphs = sorted(glyphs, key=lambda g: (g["center"][1] // 40, g["center"][0]))
+    # Sort glyphs by position: top-to-bottom, left-to-right
+    glyphs = sorted(glyphs, key=lambda g: (g["center"][1] // 35, g["center"][0]))
     return glyphs[:max_glyphs]
 
-def compute_glyph_cloning(glyphs: List[Dict[str, Any]]) -> Tuple[float, float, List[Dict[str, Any]]]:
+def compute_glyph_cloning(glyphs: List[Dict[str, Any]]) -> Tuple[float, float, List[Dict[str, Any]], int]:
     """
-    Compares candidate glyphs pairwise.
-    In font-rendered / plotter text, recurring instances of the same letter have
-    identical shape, resulting in Normalized Cross-Correlation (NCC) > 0.95.
-    In human handwriting, motor variance causes NCC to drop significantly (< 0.88).
+    Compares candidate glyphs pairwise across the document.
+    Identifies systemic font repetition.
+    In true font/plotter text, recurring instances of the same letter have
+    identical mathematical shape (NCC >= 0.93) and repeat systematically across multiple words.
+    In human handwriting, motor variance causes natural fluctuations (coincidences are <= 0.88).
     
     Returns:
         clone_ratio: Fraction of tested glyphs that have an identical clone
         max_similarity: Highest correlation found between distinct glyphs
         top_clone_pairs: Coordinates and metadata for top detected cloned pairs
+        cluster_3plus_count: Number of glyphs participating in multi-instance font clusters
     """
     if len(glyphs) < 6:
-        return 0.0, 0.0, []
+        return 0.0, 0.0, [], 0
         
     num_glyphs = len(glyphs)
     cloned_indices = set()
     max_sim = 0.0
     detected_pairs = []
+    
+    # Graph of clone matches at high confidence (>= 0.93)
+    clone_matches = {i: set() for i in range(num_glyphs)}
     
     # Compare glyphs with similar aspect ratio and height
     for i in range(num_glyphs):
@@ -98,16 +107,16 @@ def compute_glyph_cloning(glyphs: List[Dict[str, Any]]) -> Tuple[float, float, L
         for j in range(i + 1, num_glyphs):
             g2 = glyphs[j]
             
-            # Spatial separation: must be distinct occurrences (at least 30px apart)
+            # Spatial separation: must be distinct occurrences (at least 25px apart)
             dx = abs(g1["center"][0] - g2["center"][0])
             dy = abs(g1["center"][1] - g2["center"][1])
             if dx < 25 and dy < 15:
                 continue
                 
             # Aspect ratio and height compatibility
-            if abs(g1["aspect"] - g2["aspect"]) > 0.35:
+            if abs(g1["aspect"] - g2["aspect"]) > 0.30:
                 continue
-            if abs(g1["height"] - g2["height"]) / max(g1["height"], g2["height"]) > 0.25:
+            if abs(g1["height"] - g2["height"]) / max(g1["height"], g2["height"]) > 0.22:
                 continue
                 
             p2 = g2["patch"].astype(np.float32)
@@ -121,11 +130,15 @@ def compute_glyph_cloning(glyphs: List[Dict[str, Any]]) -> Tuple[float, float, L
             if ncc > max_sim:
                 max_sim = ncc
                 
-            # Suspicious threshold for font duplication
-            if ncc >= 0.90:
+            # Strict threshold for true font template duplication (font glyphs are >= 0.93)
+            if ncc >= 0.93:
                 cloned_indices.add(i)
                 cloned_indices.add(j)
-            if ncc >= 0.80:
+                clone_matches[i].add(j)
+                clone_matches[j].add(i)
+                
+            # Only record pairs with real, high-confidence clone resemblance (>= 0.91)
+            if ncc >= 0.91:
                 detected_pairs.append({
                     "score": round(ncc * 100, 1),
                     "g1": g1["bbox"],
@@ -135,6 +148,9 @@ def compute_glyph_cloning(glyphs: List[Dict[str, Any]]) -> Tuple[float, float, L
                 
     # Sort pairs by highest similarity
     detected_pairs = sorted(detected_pairs, key=lambda x: x["score"], reverse=True)
+    
+    # Count how many glyphs belong to multi-occurrence font clusters (clusters of size >= 3)
+    cluster_3plus_count = sum(1 for i in range(num_glyphs) if len(clone_matches[i]) >= 2)
     
     # Keep top non-overlapping representative pairs
     curated_pairs = []
@@ -152,13 +168,19 @@ def compute_glyph_cloning(glyphs: List[Dict[str, Any]]) -> Tuple[float, float, L
                 "score": p["score"],
                 "box1": {"x": b1[0], "y": b1[1], "w": b1[2], "h": b1[3]},
                 "box2": {"x": b2[0], "y": b2[1], "w": b2[2], "h": b2[3]},
-                "label": f"Glif Identik Berulang • Korelasi {p['score']}% (Khas Font/Plotter)"
+                "label": f"Glif Serupa • Korelasi {p['score']}%"
             })
             if len(curated_pairs) >= 3:
                 break
                 
-    clone_ratio = len(cloned_indices) / float(num_glyphs) if num_glyphs > 0 else 0.0
-    return clone_ratio, max_sim, curated_pairs
+    # In handwriting, 1 or 2 isolated pairs with 90-91% is sheer chance (e.g. two vertical stems of 'l').
+    # A true font generator/plotter exhibits systemic repeating allographs across the document.
+    if len(cloned_indices) < 6:
+        clone_ratio = 0.0
+    else:
+        clone_ratio = len(cloned_indices) / float(num_glyphs) if num_glyphs > 0 else 0.0
+        
+    return clone_ratio, max_sim, curated_pairs, cluster_3plus_count
 
 def compute_stroke_width_variance(text_binary: np.ndarray) -> Tuple[float, float]:
     """
@@ -274,7 +296,7 @@ def extract_forensic_features(img_bgr: np.ndarray) -> Dict[str, Any]:
     glyphs = extract_glyph_candidates(text_binary, max_glyphs=140)
     
     # 1. Cloned glyphs
-    clone_ratio, max_sim, top_pairs = compute_glyph_cloning(glyphs)
+    clone_ratio, max_sim, top_pairs, cluster_3plus_count = compute_glyph_cloning(glyphs)
     
     # 2. Stroke width variation
     mean_sw, stroke_cv = compute_stroke_width_variance(text_binary)
@@ -306,6 +328,7 @@ def extract_forensic_features(img_bgr: np.ndarray) -> Dict[str, Any]:
         "baseline_rigidity": baseline_rigidity,
         "height_cv": height_cv,
         "num_glyphs_analyzed": len(glyphs),
+        "cluster_3plus_count": cluster_3plus_count,
         "top_pairs": top_pairs,
         "img_width": w_img,
         "img_height": h_img

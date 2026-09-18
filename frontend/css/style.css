@@ -394,14 +394,19 @@ button, input, select, textarea, .card, .badge, .panel, .tag {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  opacity: 0.55;
-  background-size: 100% 28px;
-  background-image: linear-gradient(to bottom, rgba(78, 95, 126, 0.3) 1px, transparent 1px);
-  transition: opacity 0.2s ease;
+  display: block;
+  opacity: 0.85;
+  background-size: 32px 32px;
+  background-image: 
+    linear-gradient(to right, rgba(0, 102, 204, 0.3) 1.5px, transparent 1.5px),
+    linear-gradient(to bottom, rgba(0, 102, 204, 0.45) 1.5px, transparent 1.5px);
+  box-shadow: inset 24px 0 0 rgba(0, 51, 102, 0.08);
+  transition: opacity 0.15s ease;
 }
 
 .ruler-grid-overlay.hidden-grid {
-  opacity: 0;
+  display: none !important;
+  opacity: 0 !important;
 }
 
 /* ==========================================================================
@@ -547,24 +552,79 @@ button, input, select, textarea, .card, .badge, .panel, .tag {
   box-shadow: 0 12px 40px rgba(0,0,0,0.2);
 }
 
-/* Print Specific */
+/* ==========================================================================
+   PRINT SPECIFIC (HIGH-END A4 FORENSIC AUDIT EXPORT)
+   ========================================================================== */
 @media print {
-  .app-header, .btn-no-print, .nav-link, footer, .specimen-viewport-wrapper, .modal-backdrop {
+  /* Eliminate all unprintable interactive UI components */
+  header,
+  .app-header,
+  nav,
+  .nav-link,
+  footer,
+  button,
+  .btn-no-print,
+  .interactive-toolbar,
+  #specimen-choice-container,
+  .btn-specimen-choice,
+  #btn-header-new-upload,
+  #btn-toggle-ruler,
+  #btn-toggle-annotations,
+  #btn-toggle-loupe,
+  #btn-open-methods-modal,
+  #btn-print-report,
+  #btn-copy-summary,
+  #btn-switch-case,
+  #methods-modal,
+  .ruler-grid-overlay,
+  .loupe-lens,
+  #floating-tooltip {
     display: none !important;
   }
+
   body {
     background-color: #FFFFFF !important;
+    color: #111827 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
+
+  /* When printing official report modal */
+  body.printing-report .main-content,
+  body.printing-report .app-header,
+  body.printing-report footer {
+    display: none !important;
+  }
+
+  body.printing-report .modal-backdrop,
   .modal-backdrop.open {
     position: static !important;
+    display: block !important;
     background: transparent !important;
     opacity: 1 !important;
-    display: block !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
   }
+
   .modal-sheet {
     box-shadow: none !important;
     border: none !important;
     max-width: 100% !important;
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Keep document and verdict cleanly formatted */
+  .view-section {
     padding: 0 !important;
   }
+
+  .bg-surface-container-low,
+  .bg-surface-container-high {
+    border: 1px solid #E5E7EB !important;
+    box-shadow: none !important;
+  }
 }
+
