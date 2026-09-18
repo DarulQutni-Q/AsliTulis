@@ -113,7 +113,7 @@ def evaluate_image_bytes(contents: bytes, filename: str = "specimen.jpg") -> Dic
         is_fake = True
     elif is_biological_human and pred == 1:
         is_fake = False
-    elif is_biological_human and pred == 0 and prob[0] < 0.85:
+    elif is_biological_human and pred == 0 and prob[0] < 0.60:
         # Biological human features override weak ML uncertainty
         is_fake = False
     else:
