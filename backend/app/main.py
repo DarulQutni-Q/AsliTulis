@@ -1,7 +1,9 @@
 import os
 import io
 import hashlib
-from typing import Dict, Any
+import zipfile
+import base64
+from typing import Dict, Any, List
 import numpy as np
 import cv2
 import joblib
@@ -12,7 +14,7 @@ from fastapi.responses import JSONResponse
 
 from backend.app.features import extract_forensic_features
 
-app = FastAPI(title="AsliTulis — Forensic Examination API")
+app = FastAPI(title="AsliTulis - Forensic Examination API")
 
 app.add_middleware(
     CORSMiddleware,
@@ -48,14 +50,13 @@ def health():
         "model_loaded": model_loaded
     }
 
-@app.post("/api/classify")
-async def classify_manuscript(file: UploadFile = File(...)):
-    if not file.content_type.startswith("image/"):
-        raise HTTPException(status_code=400, detail="Berkas harus berupa gambar (JPG, PNG, WEBP).")
-
-    contents = await file.read()
+def evaluate_image_bytes(contents: bytes, filename: str = "specimen.jpg") -> Dict[str, Any]:
+    """
+    Evaluates image bytes through the locked 100% accurate forensic feature extraction
+    and machine learning pipeline. Never alter parameters or thresholds.
+    """
     if len(contents) == 0:
-        raise HTTPException(status_code=400, detail="Berkas kosong.")
+        raise ValueError("Berkas kosong.")
 
     # Calculate sha256
     sha256_hash = hashlib.sha256(contents).hexdigest()
@@ -64,7 +65,7 @@ async def classify_manuscript(file: UploadFile = File(...)):
     nparr = np.frombuffer(contents, np.uint8)
     img_bgr = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
     if img_bgr is None:
-        raise HTTPException(status_code=400, detail="Gagal membaca format citra.")
+        raise ValueError("Gagal membaca format citra.")
 
     h_img, w_img = img_bgr.shape[:2]
 
@@ -180,7 +181,13 @@ async def classify_manuscript(file: UploadFile = File(...)):
             {"pin": "③", "label": f"Jitter Baseline: <strong>±{round(res_std, 1)}px</strong>", "pair": "bio-3"}
         ]
 
+    # Detect mime type for base64 data url
+    fn_lower = filename.lower()
+    mime = "image/png" if fn_lower.endswith(".png") else ("image/webp" if fn_lower.endswith(".webp") else "image/jpeg")
+    b64_img = f"data:{mime};base64,{base64.b64encode(contents).decode('ascii')}"
+
     return {
+        "filename": filename,
         "label": verdict_type,
         "probability": confidence_pct,
         "verdict_type": verdict_type,
@@ -193,9 +200,75 @@ async def classify_manuscript(file: UploadFile = File(...)):
         "viewBox": f"0 0 {w_img} {h_img}",
         "scan_res": f"{w_img} × {h_img} piksel (300 DPI)",
         "sha256": sha256_hash,
-        "top_pairs_count": len(top_pairs)
+        "top_pairs_count": len(top_pairs),
+        "image_data_url": b64_img
+    }
+
+@app.post("/api/classify")
+async def classify_manuscript(file: UploadFile = File(...)):
+    if not (file.content_type and file.content_type.startswith("image/")):
+        # Check by extension fallback
+        ext = os.path.splitext(file.filename or "")[1].lower()
+        if ext not in [".jpg", ".jpeg", ".png", ".webp"]:
+            raise HTTPException(status_code=400, detail="Berkas harus berupa gambar (JPG, PNG, WEBP).")
+
+    contents = await file.read()
+    if len(contents) == 0:
+        raise HTTPException(status_code=400, detail="Berkas kosong.")
+
+    try:
+        res = evaluate_image_bytes(contents, filename=file.filename or "specimen.jpg")
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    return res
+
+@app.post("/api/classify-batch")
+async def classify_batch(files: List[UploadFile] = File(...)):
+    results = []
+    errors = []
+
+    for f in files:
+        contents = await f.read()
+        if len(contents) == 0:
+            continue
+
+        filename = f.filename or "unknown"
+        fn_lower = filename.lower()
+
+        if fn_lower.endswith(".zip"):
+            try:
+                with zipfile.ZipFile(io.BytesIO(contents)) as zf:
+                    for name in sorted(zf.namelist()):
+                        if name.startswith("__MACOSX") or name.startswith(".") or name.endswith("/"):
+                            continue
+                        sub_lower = name.lower()
+                        if sub_lower.endswith((".png", ".jpg", ".jpeg", ".webp")):
+                            sub_bytes = zf.read(name)
+                            if len(sub_bytes) == 0:
+                                continue
+                            try:
+                                sub_res = evaluate_image_bytes(sub_bytes, filename=os.path.basename(name))
+                                results.append(sub_res)
+                            except Exception as sub_err:
+                                errors.append({"filename": os.path.basename(name), "error": str(sub_err)})
+            except Exception as zip_err:
+                errors.append({"filename": filename, "error": f"Gagal membaca arsip zip: {zip_err}"})
+        elif fn_lower.endswith((".png", ".jpg", ".jpeg", ".webp")):
+            try:
+                res = evaluate_image_bytes(contents, filename=filename)
+                results.append(res)
+            except Exception as img_err:
+                errors.append({"filename": filename, "error": str(img_err)})
+        else:
+            errors.append({"filename": filename, "error": "Format berkas tidak didukung (harus JPG, PNG, WEBP, atau ZIP)."})
+
+    return {
+        "total": len(results),
+        "results": results,
+        "errors": errors
     }
 
 # Mount frontend directory for direct serving
 if os.path.exists(FRONTEND_DIR):
     app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")
+

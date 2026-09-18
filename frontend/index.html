@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>AsliTulis — Konsol Forensik Keaslian Tulisan Tangan</title>
+  <title>AsliTulis - Konsol Forensik Keaslian Tulisan Tangan</title>
   
   <!-- Typography & Icons -->
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -168,16 +168,16 @@
               <span class="material-symbols-outlined text-primary text-[28px]">history_edu</span>
             </div>
             <p class="font-display text-xl md:text-2xl text-primary mb-1">
-              Unggah atau seret foto tulisan tangan mahasiswa ke sini
+              Unggah atau seret naskah ujian mahasiswa ke sini
             </p>
             <p class="font-body-sm text-xs text-on-surface-variant mb-5 max-w-sm">
-              Mendukung foto format JPG, PNG, atau pindaian kamera smartphone resolusi tinggi.
+              Mendukung foto tunggal (JPG, PNG, WEBP), multi-berkas sekaligus, atau arsip ZIP satu kelas.
             </p>
 
             <div class="flex flex-wrap items-center justify-center gap-3">
               <label class="px-5 py-2 bg-primary text-white border border-primary font-mono-metric text-xs cursor-pointer hover:bg-primary-container transition-colors shadow-sm">
-                Pilih Foto dari Perangkat
-                <input accept=".jpg,.jpeg,.png,.webp" class="hidden" id="file-input" type="file"/>
+                Pilih Berkas (Multi-Foto / ZIP)
+                <input accept=".jpg,.jpeg,.png,.webp,.zip" class="hidden" id="file-input" type="file" multiple/>
               </label>
               
               <button class="px-5 py-2 bg-surface-container-low text-primary border border-outline-variant font-mono-metric text-xs hover:bg-surface-container-high transition-colors font-medium" id="btn-demo" type="button">
@@ -195,7 +195,7 @@
             <div class="laser-line"></div>
             <div class="w-full max-w-md flex flex-col items-center gap-2 z-20">
               <div class="w-9 h-9 border-2 border-primary border-t-transparent animate-spin"></div>
-              <span class="font-display text-base text-primary mt-2 font-semibold">Memindai Densitas Karakter...</span>
+              <span class="font-display text-base text-primary mt-2 font-semibold" id="progress-title">Memindai Densitas Karakter...</span>
               <span class="font-mono-metric text-xs text-on-surface-variant text-center" id="progress-phase">
                 Melakukan kalibrasi sudut rotasi kertas dan segregasi baris
               </span>
@@ -206,7 +206,7 @@
           </div>
         </div>
 
-        <!-- Specimen Preview Bar (Hidden initially) -->
+        <!-- Specimen Preview Bar (Single file preview) -->
         <div class="hidden mt-4 bg-surface-container-lowest border border-outline-variant p-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3" id="specimen-card">
           <div class="flex items-center gap-3">
             <div class="w-14 h-16 bg-surface-container-high border border-outline-variant overflow-hidden shrink-0">
@@ -227,6 +227,63 @@
             <button class="px-4 py-1.5 font-mono-metric text-xs bg-primary text-white border border-primary hover:bg-primary-container font-semibold" id="btn-run-full-analysis" type="button">
               Buka Lembar Analisis &rarr;
             </button>
+          </div>
+        </div>
+
+        <!-- Batch Results Card (Shown when multi-files or zip uploaded) -->
+        <div class="hidden mt-4 bg-surface-container-lowest border border-outline-variant p-4 flex flex-col gap-3" id="batch-results-card">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-outline-variant pb-3">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="font-mono-metric text-[10px] bg-primary text-white px-2 py-0.5 font-semibold">PEMERIKSAAN MASSAL KELAS</span>
+                <span class="font-mono-metric text-xs text-primary font-bold" id="batch-total-files">Total: 0 Naskah</span>
+              </div>
+              <h3 class="font-display text-base text-primary mt-1">Rekapitulasi Hasil Deteksi Naskah Mahasiswa</h3>
+            </div>
+            <div class="flex items-center gap-2">
+              <button class="px-3 py-1.5 font-mono-metric text-xs border border-outline-variant text-on-surface-variant hover:text-on-surface cursor-pointer" id="btn-batch-clear" type="button">
+                Bersihkan
+              </button>
+              <button class="px-3 py-1.5 font-mono-metric text-xs bg-primary text-white border border-primary hover:bg-primary-container font-semibold flex items-center gap-1.5 cursor-pointer shadow-sm" id="btn-batch-export-csv" type="button" title="Unduh hasil batch ini ke format CSV">
+                <span class="material-symbols-outlined text-[15px]">download</span>
+                <span>Unduh Rekapitulasi (.CSV)</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Summary Badges -->
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div class="p-2.5 bg-surface-container-low border border-outline-variant">
+              <span class="font-mono-metric text-[10px] text-on-surface-variant">TOTAL DIPROSES</span>
+              <p class="font-display text-xl text-primary font-bold mt-0.5" id="batch-stat-total">0</p>
+            </div>
+            <div class="p-2.5 bg-secondary-fixed/40 border border-secondary/20">
+              <span class="font-mono-metric text-[10px] text-secondary font-semibold">TERINDIKASI SINTETIS</span>
+              <p class="font-display text-xl text-secondary font-bold mt-0.5" id="batch-stat-suspect">0</p>
+            </div>
+            <div class="p-2.5 bg-tertiary-fixed/40 border border-tertiary/20 col-span-2 sm:col-span-1">
+              <span class="font-mono-metric text-[10px] text-tertiary font-semibold">LOLOS (OTENTIK)</span>
+              <p class="font-display text-xl text-tertiary font-bold mt-0.5" id="batch-stat-authentic">0</p>
+            </div>
+          </div>
+
+          <!-- Batch Table -->
+          <div class="w-full overflow-x-auto border border-outline-variant">
+            <table class="ledger-table w-full text-xs">
+              <thead>
+                <tr>
+                  <th>No</th>
+                  <th>Nama Berkas / Mahasiswa</th>
+                  <th>Korelasi Glif (Max NCC)</th>
+                  <th>Baseline & Tekanan</th>
+                  <th>Status Verdict</th>
+                  <th class="text-right">Tindakan</th>
+                </tr>
+              </thead>
+              <tbody id="batch-tbody">
+                <!-- Injected via JavaScript -->
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -318,6 +375,11 @@
             <span id="label-toggle-loupe">Kaca Pembesar (2.5x)</span>
           </button>
 
+          <button class="px-2.5 py-1 bg-surface-container-high hover:bg-surface-container-highest text-primary font-mono-metric text-xs flex items-center gap-1 transition-colors border border-outline-variant font-medium btn-no-print" id="btn-toggle-comparator" type="button" title="Bandingkan naskah uji dengan spesimen referensi otentik secara berdampingan">
+            <span class="material-symbols-outlined text-[15px]">compare</span>
+            <span id="label-toggle-comparator">Komparasi Berdampingan</span>
+          </button>
+
           <button class="px-2.5 py-1 bg-surface-container-high hover:bg-surface-container-highest text-primary font-mono-metric text-xs flex items-center gap-1 transition-colors border border-outline-variant font-medium btn-no-print" id="btn-open-methods-modal" type="button" title="Lihat penjelasan 5 metode pembeda tulisan asli vs fake font">
             <span class="material-symbols-outlined text-[15px]">science</span>
             <span>5 Metode Forensik</span>
@@ -327,10 +389,10 @@
 
       <!-- Main Inspection Desk: 65% Real Document Canvas / 35% Sidebar -->
       <div class="w-full px-6 md:px-12 py-3">
-        <div class="w-full grid grid-cols-1 xl:grid-cols-12 gap-5 items-start">
+        <div class="w-full grid grid-cols-1 xl:grid-cols-12 gap-5 items-start" id="inspection-layout-grid">
           
-          <!-- 65% Main Canvas Viewport (Left) -->
-          <div class="xl:col-span-8 flex flex-col gap-3">
+          <!-- Main Canvas Viewport (Left) -->
+          <div class="xl:col-span-8 flex flex-col gap-3" id="inspection-main-col">
             
             <!-- Document Meta Strip & Specimen Switcher -->
             <div class="bg-surface-container-low p-3 flex flex-wrap items-center justify-between gap-2 border border-outline-variant shadow-sm">
@@ -356,52 +418,94 @@
             <div class="specimen-viewport-wrapper">
               <div class="specimen-canvas-container" id="specimen-canvas-container">
                 
-                <!-- Frame holding the real photo and its overlaid SVG forensic annotations -->
-                <div class="specimen-image-frame" id="specimen-frame">
-                  <!-- The Actual High-Res Handwritten Document Photo -->
-                  <img id="main-specimen-img" src="assets/samples/sample_fake_caveat.jpg" alt="Pindaian Naskah Tulisan Tangan Asli"/>
+                <!-- Single View Specimen Frame (Centered & Prominent) -->
+                <div id="single-specimen-frame" class="w-full flex items-center justify-center">
+                  <!-- Frame holding the real photo and its overlaid SVG forensic annotations -->
+                  <div class="specimen-image-frame" id="specimen-frame">
+                    <!-- The Actual High-Res Handwritten Document Photo -->
+                    <img id="main-specimen-img" src="assets/samples/sample_fake_caveat.jpg" alt="Pindaian Naskah Tulisan Tangan Asli"/>
 
-                  <!-- Ruled Measurement Grid Overlay -->
-                  <div class="ruler-grid-overlay" id="ruler-grid-overlay"></div>
+                    <!-- Ruled Measurement Grid Overlay -->
+                    <div class="ruler-grid-overlay" id="ruler-grid-overlay"></div>
 
-                  <!-- SVG Layer for Hairline Non-Colliding Forensic Highlights -->
-                  <svg id="forensic-svg-overlay" class="specimen-svg-overlay" viewBox="0 0 1006 1245" preserveAspectRatio="none">
-                    <!-- Cloned Glyph Set 1: "interaksi" on line 1 -->
-                    <g class="glyph-group" data-pair="glif-1" data-label="Glif Identik 'interaksi' • Korelasi DTW 99.8% (TTF Plotter)">
-                      <rect class="forensic-rect" x="294" y="295" width="144" height="35" rx="1"></rect>
-                      <g class="forensic-pin" transform="translate(438, 295)">
-                        <circle r="8"></circle>
-                        <text>①</text>
+                    <!-- SVG Layer for Hairline Non-Colliding Forensic Highlights -->
+                    <svg id="forensic-svg-overlay" class="specimen-svg-overlay" viewBox="0 0 1006 1245" preserveAspectRatio="none">
+                      <!-- Cloned Glyph Set 1: "interaksi" on line 1 -->
+                      <g class="glyph-group" data-pair="glif-1" data-label="Glif Identik 'interaksi' • Korelasi DTW 99.8% (TTF Plotter)">
+                        <rect class="forensic-rect" x="294" y="295" width="144" height="35" rx="1"></rect>
+                        <g class="forensic-pin" transform="translate(438, 295)">
+                          <circle r="8"></circle>
+                          <text>①</text>
+                        </g>
                       </g>
-                    </g>
 
-                    <!-- Cloned Glyph Set 1 Match on line 2: "ikatan" -->
-                    <g class="glyph-group" data-pair="glif-1" data-label="Vektor Kembar: Alograf 'k', 'a', 't' Berulang Identik 99.8%">
-                      <rect class="forensic-rect" x="195" y="342" width="65" height="32" rx="1"></rect>
-                      <g class="forensic-pin" transform="translate(260, 342)">
-                        <circle r="8"></circle>
-                        <text>①</text>
+                      <!-- Cloned Glyph Set 1 Match on line 2: "ikatan" -->
+                      <g class="glyph-group" data-pair="glif-1" data-label="Vektor Kembar: Alograf 'k', 'a', 't' Berulang Identik 99.8%">
+                        <rect class="forensic-rect" x="195" y="342" width="65" height="32" rx="1"></rect>
+                        <g class="forensic-pin" transform="translate(260, 342)">
+                          <circle r="8"></circle>
+                          <text>①</text>
+                        </g>
                       </g>
-                    </g>
 
-                    <!-- Cloned Glyph Set 2: "ditentukan" on line 1 -->
-                    <g class="glyph-group" data-pair="glif-2" data-label="Glif Identik 'ditentukan' • Kemiringan Aksis Konstan 0.0°">
-                      <rect class="forensic-rect" x="828" y="297" width="96" height="35" rx="1"></rect>
-                      <g class="forensic-pin" transform="translate(924, 297)">
-                        <circle r="8"></circle>
-                        <text>②</text>
+                      <!-- Cloned Glyph Set 2: "ditentukan" on line 1 -->
+                      <g class="glyph-group" data-pair="glif-2" data-label="Glif Identik 'ditentukan' • Kemiringan Aksis Konstan 0.0°">
+                        <rect class="forensic-rect" x="828" y="297" width="96" height="35" rx="1"></rect>
+                        <g class="forensic-pin" transform="translate(924, 297)">
+                          <circle r="8"></circle>
+                          <text>②</text>
+                        </g>
                       </g>
-                    </g>
 
-                    <!-- Baseline Caliper Line (Fine Hairline) -->
-                    <g class="glyph-group" data-pair="glif-3" data-label="Baseline Mekanis Plotter • Hough Deviasi 0.04% (Kaku)">
-                      <line x1="185" y1="330" x2="925" y2="330" stroke="#B23A2E" stroke-width="1.5" stroke-dasharray="6, 4" opacity="0.85"/>
-                      <g class="forensic-pin" transform="translate(928, 330)">
-                        <circle r="8"></circle>
-                        <text>③</text>
+                      <!-- Baseline Caliper Line (Fine Hairline) -->
+                      <g class="glyph-group" data-pair="glif-3" data-label="Baseline Mekanis Plotter • Hough Deviasi 0.04% (Kaku)">
+                        <line x1="185" y1="330" x2="925" y2="330" stroke="#B23A2E" stroke-width="1.5" stroke-dasharray="6, 4" opacity="0.85"/>
+                        <g class="forensic-pin" transform="translate(928, 330)">
+                          <circle r="8"></circle>
+                          <text>③</text>
+                        </g>
                       </g>
-                    </g>
-                  </svg>
+                    </svg>
+                  </div>
+                </div>
+
+                <!-- Side-by-Side Comparator View (2 Columns Only, Full Display) -->
+                <div id="comparator-specimen-view" class="hidden w-full p-4 grid grid-cols-1 lg:grid-cols-2 gap-5 bg-surface-container">
+                  <!-- Left Specimen: Test Paper -->
+                  <div class="flex flex-col border border-outline-variant bg-surface-container-low p-3 shadow-sm min-h-[580px]">
+                    <div class="flex items-center justify-between pb-2 mb-2 border-b border-outline-variant">
+                      <div class="flex items-center gap-2">
+                        <span class="font-mono-metric text-[10px] bg-primary text-white px-2 py-0.5 font-bold">NASKAH UJI</span>
+                        <span class="font-mono-metric text-xs font-semibold text-primary truncate max-w-[220px]" id="comparator-test-title">Spesimen Aktif</span>
+                      </div>
+                      <span class="font-mono-metric text-[10px] px-2 py-0.5 bg-secondary-fixed text-on-secondary-fixed-variant font-bold border border-secondary/30" id="comparator-test-badge">TERINDIKASI SINTETIS</span>
+                    </div>
+                    <div class="relative w-full flex-1 min-h-[480px] bg-[#F4F1E6] overflow-hidden flex items-center justify-center border border-outline-variant p-2">
+                      <img id="comparator-test-img" src="assets/samples/sample_fake_caveat.jpg" alt="Naskah Uji" class="max-h-[560px] w-auto max-w-full object-contain shadow-sm border border-outline-variant/60"/>
+                    </div>
+                    <div class="mt-2 pt-2 border-t border-outline-variant text-[11px] font-mono-metric text-on-surface-variant flex justify-between">
+                      <span>Korelasi Glif (Max NCC):</span>
+                      <span id="comparator-test-ncc" class="font-bold text-secondary">99.8% (Identik)</span>
+                    </div>
+                  </div>
+
+                  <!-- Right Specimen: Authentic Reference -->
+                  <div class="flex flex-col border border-outline-variant bg-surface-container-low p-3 shadow-sm min-h-[580px]">
+                    <div class="flex items-center justify-between pb-2 mb-2 border-b border-outline-variant">
+                      <div class="flex items-center gap-2">
+                        <span class="font-mono-metric text-[10px] bg-tertiary text-white px-2 py-0.5 font-bold">REFERENSI OTENTIK</span>
+                        <span class="font-mono-metric text-xs font-semibold text-primary">Tulisan Biologis Siswa</span>
+                      </div>
+                      <span class="font-mono-metric text-[10px] px-2 py-0.5 bg-tertiary-fixed text-tertiary font-bold border border-tertiary/30">LOLOS (OTENTIK)</span>
+                    </div>
+                    <div class="relative w-full flex-1 min-h-[480px] bg-[#F4F1E6] overflow-hidden flex items-center justify-center border border-outline-variant p-2">
+                      <img id="comparator-ref-img" src="assets/samples/sample_real_user.jpg" alt="Referensi Otentik" class="max-h-[560px] w-auto max-w-full object-contain shadow-sm border border-outline-variant/60"/>
+                    </div>
+                    <div class="mt-2 pt-2 border-t border-outline-variant text-[11px] font-mono-metric text-on-surface-variant flex justify-between">
+                      <span>Karakteristik Motorik:</span>
+                      <span class="font-bold text-tertiary">Entropi 41% (Dinamis Alami)</span>
+                    </div>
+                  </div>
                 </div>
 
                 <!-- Floating Forensic Tooltip (Appears at cursor over annotations) -->
@@ -434,8 +538,8 @@
 
           </div>
 
-          <!-- 35% Forensic Verdict & Parameters Sidebar (Right) -->
-          <aside class="xl:col-span-4 flex flex-col gap-3">
+          <!-- Forensic Verdict & Parameters Sidebar (Right) -->
+          <aside class="xl:col-span-4 flex flex-col gap-3" id="inspection-sidebar-col">
             
             <!-- Verdict Score Card -->
             <div class="bg-surface-container-low p-4 border border-outline-variant shadow-sm">
@@ -594,7 +698,11 @@
         </div>
 
         <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
-          <span class="font-mono-metric text-xs text-on-surface-variant">Filter Status:</span>
+          <button type="button" id="btn-export-archive-csv" class="px-3 py-1 bg-primary text-white border border-primary text-xs font-mono-metric flex items-center gap-1.5 hover:bg-primary-container font-semibold transition-colors shadow-sm cursor-pointer" title="Ekspor seluruh riwayat buku catatan arsip ke file CSV untuk SIAKAD">
+            <span class="material-symbols-outlined text-[15px]">download</span>
+            <span>Unduh Rekapitulasi (.CSV)</span>
+          </button>
+          <span class="font-mono-metric text-xs text-on-surface-variant ml-1">Filter:</span>
           <select class="bg-surface border border-outline-variant text-xs py-1 px-2 text-primary focus:outline-none cursor-pointer" id="archive-filter">
             <option value="all">Semua Naskah</option>
             <option value="suspect">Hanya Terindikasi AI / Plotter</option>
@@ -679,7 +787,7 @@
             </div>
             <div class="p-2 bg-tertiary-fixed/20 border-l-2 border-tertiary">
               <strong class="text-tertiary">Tulisan Tangan Manusia (Asli):</strong>
-              <p class="text-on-surface text-[10px] mt-0.5">Korelasi hanya 65%–82%. Biomekanika tangan dan keletihan motorik mustahil menduplikasi kurvatura yang 100% kembar.</p>
+              <p class="text-on-surface text-[10px] mt-0.5">Korelasi hanya 65% - 82%. Biomekanika tangan dan keletihan motorik mustahil menduplikasi kurvatura yang 100% kembar.</p>
             </div>
           </div>
         </div>
