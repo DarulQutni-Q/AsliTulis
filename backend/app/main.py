@@ -142,56 +142,85 @@ def evaluate_image_bytes(contents: bytes, filename: str = "specimen.jpg") -> Dic
     pad_x = 3
     pad_y = 4
     
-    for i, pair in enumerate(top_pairs):
-        pin = pair["pin"]
-        b1, b2 = pair["box1"], pair["box2"]
-        pair_id = f"glif-{i+1}"
-        
-        bx1 = max(0, b1['x'] - pad_x)
-        by1 = max(0, b1['y'] - pad_y)
-        bw1 = b1['w'] + (pad_x * 2)
-        bh1 = b1['h'] + (pad_y * 2)
-        
-        bx2 = max(0, b2['x'] - pad_x)
-        by2 = max(0, b2['y'] - pad_y)
-        bw2 = b2['w'] + (pad_x * 2)
-        bh2 = b2['h'] + (pad_y * 2)
-        
-        # SVG rect & pin 1
-        svg_elements.append(f'''
-        <g class="glyph-group" data-pair="{pair_id}" data-label="{pair['label']}">
-          <rect class="forensic-rect" x="{bx1}" y="{by1}" width="{bw1}" height="{bh1}" rx="2"></rect>
-          <g class="forensic-pin" transform="translate({bx1 + bw1}, {by1})">
-            <circle r="8"></circle>
-            <text>{pin}</text>
-          </g>
-        </g>
-        ''')
-        
-        # SVG rect & pin 2 (the matching twin)
-        svg_elements.append(f'''
-        <g class="glyph-group" data-pair="{pair_id}" data-label="Vektor Kembar: Korelasi {pair['score']}% identik">
-          <rect class="forensic-rect" x="{bx2}" y="{by2}" width="{bw2}" height="{bh2}" rx="2"></rect>
-          <g class="forensic-pin" transform="translate({bx2 + bw2}, {by2})">
-            <circle r="8"></circle>
-            <text>{pin}</text>
-          </g>
-        </g>
-        ''')
-        
-        legend_items.append({
-            "pin": pin,
-            "label": f"Glif Kembar {pin}: <strong>{pair['score']}%</strong>",
-            "pair": pair_id
-        })
-
-    # If no duplicate glyphs (authentic handwriting), add general biometric inspection annotations
-    if len(svg_elements) == 0:
-        legend_items = [
-            {"pin": "①", "label": f"Variasi Glif: <strong>{round(max_sim * 100, 1)}%</strong>", "pair": "bio-1"},
-            {"pin": "②", "label": f"Tekanan Tinta: <strong>CV {round(stroke_cv, 2)}</strong>", "pair": "bio-2"},
-            {"pin": "③", "label": f"Jitter Baseline: <strong>±{round(res_std, 1)}px</strong>", "pair": "bio-3"}
-        ]
+    if is_fake:
+        # Synthetic / Font Plotter: Display top cloned twin glyph pairs (up to 5 pairs)
+        for i, pair in enumerate(top_pairs):
+            pin = pair["pin"]
+            b1, b2 = pair["box1"], pair["box2"]
+            pair_id = f"glif-{i+1}"
+            
+            bx1 = max(0, b1['x'] - pad_x)
+            by1 = max(0, b1['y'] - pad_y)
+            bw1 = b1['w'] + (pad_x * 2)
+            bh1 = b1['h'] + (pad_y * 2)
+            
+            bx2 = max(0, b2['x'] - pad_x)
+            by2 = max(0, b2['y'] - pad_y)
+            bw2 = b2['w'] + (pad_x * 2)
+            bh2 = b2['h'] + (pad_y * 2)
+            
+            # SVG rect & pin 1
+            svg_elements.append(f'''
+            <g class="glyph-group" data-pair="{pair_id}" data-label="{pair['label']}">
+              <rect class="forensic-rect" x="{bx1}" y="{by1}" width="{bw1}" height="{bh1}" rx="2"></rect>
+              <g class="forensic-pin" transform="translate({bx1 + bw1}, {by1})">
+                <circle r="8"></circle>
+                <text>{pin}</text>
+              </g>
+            </g>
+            ''')
+            
+            # SVG rect & pin 2 (the matching twin)
+            svg_elements.append(f'''
+            <g class="glyph-group" data-pair="{pair_id}" data-label="Vektor Kembar {pin}: Korelasi {pair['score']}% identik">
+              <rect class="forensic-rect" x="{bx2}" y="{by2}" width="{bw2}" height="{bh2}" rx="2"></rect>
+              <g class="forensic-pin" transform="translate({bx2 + bw2}, {by2})">
+                <circle r="8"></circle>
+                <text>{pin}</text>
+              </g>
+            </g>
+            ''')
+            
+            legend_items.append({
+                "pin": pin,
+                "label": f"Glif Kembar {pin}: <strong>{pair['score']}%</strong>",
+                "pair": pair_id
+            })
+    else:
+        # Authentic Handwriting: Display 5 sample glyphs showing natural biological motoric variance
+        all_glyphs = features.get("glyphs", [])
+        sample_glyphs = []
+        if len(all_glyphs) >= 5:
+            step = len(all_glyphs) / 5.0
+            sample_glyphs = [all_glyphs[int(k * step)] for k in range(5)]
+        else:
+            sample_glyphs = all_glyphs[:5]
+            
+        pin_symbols = ["①", "②", "③", "④", "⑤"]
+        for k, g in enumerate(sample_glyphs):
+            pin = pin_symbols[k % len(pin_symbols)]
+            pair_id = f"bio-{k+1}"
+            x, y, w, h = g["bbox"]
+            bx = max(0, x - pad_x)
+            by = max(0, y - pad_y)
+            bw = w + (pad_x * 2)
+            bh = h + (pad_y * 2)
+            
+            svg_elements.append(f'''
+            <g class="glyph-group" data-pair="{pair_id}" data-label="Sampel Glif Biologis {pin} • Variasi Alami ({bw}×{bh}px)">
+              <rect class="forensic-rect" x="{bx}" y="{by}" width="{bw}" height="{bh}" rx="2"></rect>
+              <g class="forensic-pin" transform="translate({bx + bw}, {by})">
+                <circle r="8"></circle>
+                <text>{pin}</text>
+              </g>
+            </g>
+            ''')
+            
+            legend_items.append({
+                "pin": pin,
+                "label": f"Sampel Glif {pin}: <strong>Variasi Alami ({bw}×{bh}px)</strong>",
+                "pair": pair_id
+            })
 
     # Detect mime type for base64 data url
     fn_lower = filename.lower()

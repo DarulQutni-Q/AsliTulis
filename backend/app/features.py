@@ -114,16 +114,10 @@ def compute_glyph_cloning(glyphs: List[Dict[str, Any]]) -> Tuple[float, float, L
         for j in range(i + 1, min(num_glyphs, 150)):
             g2 = glyphs[j]
             
-            # Spatial separation: must be distinct occurrences (at least 25px apart horizontally or 15px vertically)
+            # Spatial separation: must be distinct occurrences (at least 20px apart horizontally or 12px vertically)
             dx = abs(g1["center"][0] - g2["center"][0])
             dy = abs(g1["center"][1] - g2["center"][1])
-            if dx < 25 and dy < 15:
-                continue
-                
-            # Aspect ratio and height compatibility
-            if abs(g1["aspect"] - g2["aspect"]) > 0.28:
-                continue
-            if abs(g1["height"] - g2["height"]) / max(g1["height"], g2["height"]) > 0.22:
+            if dx < 20 and dy < 12:
                 continue
                 
             p2 = g2["patch"].astype(np.float32)
@@ -134,18 +128,22 @@ def compute_glyph_cloning(glyphs: List[Dict[str, Any]]) -> Tuple[float, float, L
             # Normalized Cross Correlation
             ncc = float(np.sum(p1 * p2) / (norm1 * norm2))
             
-            if ncc > max_sim:
-                max_sim = ncc
-                
-            # Strict threshold for true font template duplication (font glyphs are >= 0.93)
-            if ncc >= 0.93:
-                cloned_indices.add(i)
-                cloned_indices.add(j)
-                clone_matches[i].add(j)
-                clone_matches[j].add(i)
-                
-            # Only record pairs with real, high-confidence clone resemblance (>= 0.915)
-            if ncc >= 0.915:
+            # Aspect ratio and height difference
+            aspect_diff = abs(g1["aspect"] - g2["aspect"])
+            height_diff = abs(g1["height"] - g2["height"]) / max(g1["height"], g2["height"])
+            
+            # Strict clone criteria for classification features
+            if aspect_diff <= 0.28 and height_diff <= 0.22:
+                if ncc > max_sim:
+                    max_sim = ncc
+                if ncc >= 0.93:
+                    cloned_indices.add(i)
+                    cloned_indices.add(j)
+                    clone_matches[i].add(j)
+                    clone_matches[j].add(i)
+                    
+            # Candidate pairs for visual annotation (ranking ensures top 5 pairs always selected)
+            if height_diff <= 0.40 and aspect_diff <= 0.50:
                 detected_pairs.append({
                     "score": round(ncc * 100, 1),
                     "g1": g1["bbox"],
@@ -162,7 +160,7 @@ def compute_glyph_cloning(glyphs: List[Dict[str, Any]]) -> Tuple[float, float, L
     # cluster_5plus: clusters of size >= 5 (matches >= 4)
     cluster_5plus_count = sum(1 for i in range(num_glyphs) if len(clone_matches[i]) >= 4)
     
-    # Keep top non-overlapping representative pairs
+    # Keep top 5 non-overlapping representative pairs
     curated_pairs = []
     seen_boxes = set()
     pin_symbols = ["①", "②", "③", "④", "⑤"]
@@ -178,9 +176,9 @@ def compute_glyph_cloning(glyphs: List[Dict[str, Any]]) -> Tuple[float, float, L
                 "score": p["score"],
                 "box1": {"x": b1[0], "y": b1[1], "w": b1[2], "h": b1[3]},
                 "box2": {"x": b2[0], "y": b2[1], "w": b2[2], "h": b2[3]},
-                "label": f"Glif Serupa • Korelasi {p['score']}%"
+                "label": f"Glif Kembar {pin} • Korelasi {p['score']}%"
             })
-            if len(curated_pairs) >= 3:
+            if len(curated_pairs) >= 5:
                 break
                 
     clone_ratio = len(cloned_indices) / float(num_glyphs) if num_glyphs > 0 else 0.0
@@ -333,6 +331,7 @@ def extract_forensic_features(img_bgr: np.ndarray) -> Dict[str, Any]:
         "ink_std": ink_std,
         "num_glyphs_analyzed": len(glyphs),
         "top_pairs": top_pairs,
+        "glyphs": glyphs,
         "img_width": w_img,
         "img_height": h_img
     }
