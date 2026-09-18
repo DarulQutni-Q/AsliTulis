@@ -90,8 +90,9 @@ def evaluate_image_bytes(contents: bytes, filename: str = "specimen.jpg") -> Dic
     is_hard_clone = (
         (cluster_5plus >= 2 and max_sim >= 0.940) or
         (cluster_5plus >= 1 and cluster_3plus >= 3 and max_sim >= 0.945) or
-        (clone_ratio >= 0.18 and max_sim >= 0.950) or
-        (cluster_3plus >= 6 and max_sim >= 0.940)
+        (clone_ratio >= 0.20 and max_sim >= 0.950) or
+        (cluster_3plus >= 8 and max_sim >= 0.940) or
+        (stroke_cv < 0.25 and baseline_rigidity > 88.0)
     )
 
     # 2. Biological Human Neuromuscular Motor Invariance:
@@ -100,7 +101,8 @@ def evaluate_image_bytes(contents: bytes, filename: str = "specimen.jpg") -> Dic
     is_biological_human = (
         cluster_5plus == 0 and
         clone_ratio < 0.12 and
-        (stroke_cv >= 0.28 or baseline_rigidity < 82.0)
+        stroke_cv >= 0.28 and
+        baseline_rigidity < 85.0
     )
 
     # 3. Machine Learning Pipeline (Random Forest trained on multi-feature forensic vector):
@@ -111,10 +113,7 @@ def evaluate_image_bytes(contents: bytes, filename: str = "specimen.jpg") -> Dic
     # 4. Final Verdict Synthesis:
     if is_hard_clone:
         is_fake = True
-    elif is_biological_human and pred == 1:
-        is_fake = False
-    elif is_biological_human and pred == 0 and prob[0] < 0.60:
-        # Biological human features override weak ML uncertainty
+    elif is_biological_human and (pred == 1 or prob[0] < 0.70):
         is_fake = False
     else:
         is_fake = (pred == 0)
