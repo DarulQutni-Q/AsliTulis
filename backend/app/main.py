@@ -82,23 +82,42 @@ def evaluate_image_bytes(contents: bytes, filename: str = "specimen.jpg") -> Dic
 
     clf_bundle = get_classifier()
     model = clf_bundle["model"]
+    cluster_3plus = features.get("cluster_3plus_count", 0)
     cluster_5plus = features.get("cluster_5plus_count", 0)
     
-    # 1. Direct Forensic Multi-Instance Font Repetition Law:
-    # True synthetic font engines repeat glyph templates in large multi-instance clusters (cluster >= 5 instances).
-    # Genuine human handwriting written neatly might accidentally have 1-2 small similar strokes,
-    # but will never exhibit systematic multi-instance font clusters.
+    # 1. Forensic Multi-Instance Font Repetition Evidence:
+    # Font engines repeat fixed vector glyph templates in large clusters across occurrences.
     is_hard_clone = (
-        (cluster_5plus >= 2 and max_sim >= 0.950) or
-        (cluster_5plus >= 1 and clone_ratio >= 0.08 and max_sim >= 0.940)
+        (cluster_5plus >= 2 and max_sim >= 0.940) or
+        (cluster_5plus >= 1 and cluster_3plus >= 3 and max_sim >= 0.945) or
+        (clone_ratio >= 0.18 and max_sim >= 0.950) or
+        (cluster_3plus >= 6 and max_sim >= 0.940)
     )
-    
-    # 2. Machine Learning Pipeline (Random Forest trained on multi-feature forensic vector):
+
+    # 2. Biological Human Neuromuscular Motor Invariance:
+    # A human hand holding a pen naturally exhibits neuromuscular pressure fluctuations
+    # and organic baseline meandering, and will NEVER produce systemic multi-instance font clusters.
+    is_biological_human = (
+        cluster_5plus == 0 and
+        clone_ratio < 0.12 and
+        (stroke_cv >= 0.28 or baseline_rigidity < 82.0)
+    )
+
+    # 3. Machine Learning Pipeline (Random Forest trained on multi-feature forensic vector):
     X_sample = np.array([features["feature_vector"]])
     pred = model.predict(X_sample)[0]  # 0 = Fake, 1 = Real
     prob = model.predict_proba(X_sample)[0]  # [P(Fake), P(Real)]
     
-    is_fake = is_hard_clone or (pred == 0)
+    # 4. Final Verdict Synthesis:
+    if is_hard_clone:
+        is_fake = True
+    elif is_biological_human and pred == 1:
+        is_fake = False
+    elif is_biological_human and pred == 0 and prob[0] < 0.85:
+        # Biological human features override weak ML uncertainty
+        is_fake = False
+    else:
+        is_fake = (pred == 0)
     
     if is_fake:
         fake_prob = prob[0] if not is_hard_clone else max(prob[0], max_sim)
@@ -118,9 +137,10 @@ def evaluate_image_bytes(contents: bytes, filename: str = "specimen.jpg") -> Dic
     )
 
     if is_fake:
+        baseline_desc = "kaku" if baseline_rigidity > 80.0 else "semi-teratur"
         recommendation = (
             f"Peringatan: Terdeteksi glif berulang identik dengan kemiripan hingga {round(max_sim * 100, 1)}% "
-            f"dan deviasi baseline kaku ({round(baseline_rigidity, 1)}%). Karakteristik khas generator font sintetis atau pen-plotter mekanis."
+            f"dan deviasi baseline {baseline_desc} ({round(baseline_rigidity, 1)}%). Karakteristik khas generator font sintetis atau pen-plotter mekanis."
         )
     else:
         recommendation = (

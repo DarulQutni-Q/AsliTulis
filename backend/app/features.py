@@ -36,10 +36,28 @@ def preprocess_image(img_bgr: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     
     return gray, text_binary
 
+def normalize_glyph_patch(patch: np.ndarray, target_size: int = 32) -> np.ndarray:
+    """
+    Normalizes a glyph patch onto a fixed-size canvas while strictly preserving aspect ratio.
+    Prevents artificial cross-correlation inflation from stretching thin vertical lines into identical squares.
+    """
+    h, w = patch.shape[:2]
+    if h == 0 or w == 0:
+        return np.zeros((target_size, target_size), dtype=np.uint8)
+    scale = (target_size - 4) / max(h, w)
+    new_w = max(1, int(round(w * scale)))
+    new_h = max(1, int(round(h * scale)))
+    resized = cv2.resize(patch, (new_w, new_h), interpolation=cv2.INTER_AREA)
+    canvas = np.zeros((target_size, target_size), dtype=np.uint8)
+    start_x = (target_size - new_w) // 2
+    start_y = (target_size - new_h) // 2
+    canvas[start_y:start_y+new_h, start_x:start_x+new_w] = resized
+    return canvas
+
 def extract_glyph_candidates(text_binary: np.ndarray, max_glyphs: int = 160) -> List[Dict[str, Any]]:
     """
     Finds connected component contours representing character/sub-word glyphs.
-    Filters out margins, paper boundaries, and speckles.
+    Filters out margins, paper boundaries, extreme 1D line segments, and speckles.
     """
     h_img, w_img = text_binary.shape
     mx = int(w_img * 0.03) # ignore outer 3% margins
@@ -47,6 +65,13 @@ def extract_glyph_candidates(text_binary: np.ndarray, max_glyphs: int = 160) -> 
     
     contours, _ = cv2.findContours(text_binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     glyphs = []
+    
+    # Adaptive dimension thresholds proportional to image scan resolution
+    min_h = max(16, int(h_img * 0.006))
+    min_w = max(12, int(w_img * 0.005))
+    min_area = max(65, int(min_h * min_w * 0.35))
+    max_h = max(110, int(h_img * 0.08))
+    max_w = max(140, int(w_img * 0.12))
     
     for cnt in contours:
         x, y, w, h = cv2.boundingRect(cnt)
@@ -57,12 +82,13 @@ def extract_glyph_candidates(text_binary: np.ndarray, max_glyphs: int = 160) -> 
             
         area = cv2.contourArea(cnt)
         # Valid character-sized components: lowercase letters to capitals
-        if 14 <= h <= 110 and 10 <= w <= 140 and area >= 55:
+        if min_h <= h <= max_h and min_w <= w <= max_w and area >= min_area:
             aspect = w / float(h)
             density = area / float(w * h) if w * h > 0 else 0
-            if 0.15 <= aspect <= 3.5 and 0.12 <= density <= 0.70:
+            # Exclude extreme 1D line segments (slashes, thin sticks) while keeping valid letter shapes
+            if 0.35 <= aspect <= 3.0 and 0.12 <= density <= 0.70:
                 patch = text_binary[y:y+h, x:x+w]
-                patch_norm = cv2.resize(patch, (32, 32), interpolation=cv2.INTER_AREA)
+                patch_norm = normalize_glyph_patch(patch, target_size=32)
                 glyphs.append({
                     "bbox": (x, y, w, h),
                     "aspect": aspect,
@@ -133,10 +159,10 @@ def compute_glyph_cloning(glyphs: List[Dict[str, Any]]) -> Tuple[float, float, L
             height_diff = abs(g1["height"] - g2["height"]) / max(g1["height"], g2["height"])
             
             # Strict clone criteria for classification features
-            if aspect_diff <= 0.28 and height_diff <= 0.22:
+            if aspect_diff <= 0.25 and height_diff <= 0.20:
                 if ncc > max_sim:
                     max_sim = ncc
-                if ncc >= 0.93:
+                if ncc >= 0.94:
                     cloned_indices.add(i)
                     cloned_indices.add(j)
                     clone_matches[i].add(j)
