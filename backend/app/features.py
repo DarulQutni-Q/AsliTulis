@@ -25,6 +25,8 @@ def preprocess_image(img_bgr: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     
     # Exclude top 12% printed notebook header (factory brand logos, checkboxes, spiral wire holes)
     binary[:int(h_img * 0.12), :] = 0
+    # Exclude bottom 7% margin (desk border, table shadows, notebook outer edges)
+    binary[int(h_img * 0.93):, :] = 0
     
     # Remove vertical notebook margin lines (typically red or dark lines spanning > 45px vertically)
     v_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1, 45))
@@ -57,10 +59,10 @@ def extract_glyph_candidates(text_binary: np.ndarray, max_glyphs: int = 160) -> 
         # Valid character-sized components: lowercase letters to capitals
         if 12 <= h <= 110 and 8 <= w <= 140 and area >= 35:
             aspect = w / float(h)
-            if 0.15 <= aspect <= 3.5:
+            density = area / float(w * h) if w * h > 0 else 0
+            if 0.15 <= aspect <= 3.5 and 0.12 <= density <= 0.70:
                 patch = text_binary[y:y+h, x:x+w]
                 patch_norm = cv2.resize(patch, (32, 32), interpolation=cv2.INTER_AREA)
-                density = area / float(w * h) if w * h > 0 else 0
                 glyphs.append({
                     "bbox": (x, y, w, h),
                     "aspect": aspect,
