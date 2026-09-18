@@ -1,189 +1,154 @@
-# AsliTulis — Konsol Forensik Keaslian Tulisan Tangan
+# AsliTulis
 
-[![Python](https://img.shields.io/badge/Python-3.12%2B-blue.svg)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.115%2B-009688.svg)](https://fastapi.tiangolo.com/)
-[![OpenCV](https://img.shields.io/badge/OpenCV-4.10%2B-5C3EE8.svg)](https://opencv.org/)
-[![Scikit-Learn](https://img.shields.io/badge/Scikit--Learn-1.5%2B-F7931E.svg)](https://scikit-learn.org/)
-[![Playwright](https://img.shields.io/badge/E2E-Playwright%20Tested-2EAD33.svg)](https://playwright.dev/)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+AsliTulis adalah sistem audit forensik berbasis computer vision dan machine learning untuk mendeteksi manipulasi tulisan tangan pada tugas atau lembar ujian mahasiswa. Sistem ini membedakan naskah tulisan tangan manusia asli dari naskah sintetis yang dihasilkan oleh font digital berbasis AI atau alat mekanis pen-plotter.
 
-> **Platform audit forensik digital dan integritas akademik** untuk memverifikasi keaslian naskah tugas dan lembar ujian tulis tangan terhadap manipulasi generator font sintetis, kecerdasan buatan (*handwriting font synthesis*), dan eksekusi pena robot (*mechanical pen-plotter*).
+## Latar Belakang
 
----
+Generator font tulisan tangan dan mesin pen-plotter modern dapat mereproduksi teks yang sekilas tampak seperti tulisan tangan manusia. Walaupun demikian, naskah sintetis tetap meninggalkan pola fisik yang dapat diukur secara komputasi:
+- Pengulangan karakter (alograf) dengan geometri vektor identik pada kata yang berbeda.
+- Ketebalan goresan pena yang seragam tanpa variasi tekanan dinamis.
+- Deviasi garis dasar (baseline) yang terlalu kaku terhadap garis mistar kertas.
+- Distribusi warna pigmen tinta yang rata tanpa gradien resapan serat kertas alami.
 
-## 📌 Ringkasan Eksekutif
+AsliTulis mengekstrak parameter-parameter tersebut dari citra resolusi tinggi, lalu mengevaluasinya menggunakan aturan replikasi glif dan model Random Forest.
 
-Pemanfaatan font tulisan tangan berbasis kecerdasan buatan dan mesin *pen-plotter* kini memungkinkan pembuatan tugas tulis tangan palsu yang tampak rapi dan meyakinkan secara kasat mata. Namun, secara fisik dan biomekanik, naskah digital sintetis meninggalkan anomali struktural mikroskopis: **pengulangan bentuk vektor glif yang matematis identik**, **ketebalan goresan pena yang seragam**, **deviasi garis dasar yang terlalu kaku terhadap mistar**, serta **warna pigmen tinta yang datar tanpa gradien alami penyerapan serat kertas**.
+## Metodologi Deteksi
 
-**AsliTulis** memadukan teknik *Computer Vision* (OpenCV) dan *Machine Learning* (Random Forest multivariat) untuk membedakan variasi motorik biologis alami manusia dari template font digital secara deterministik dan terukur.
+### 1. Pra-pemrosesan Citra
+- Estimasi latar belakang adaptif: Menggunakan operasi morfologi dilasi untuk memisahkan goresan tinta dari variasi pencahayaan, bayangan foto, dan tekstur kertas.
+- Eliminasi elemen cetak: Memotong area header atas (12%) untuk menghindari logo atau kotak tanggal buku, serta mendeteksi dan menghapus garis margin vertikal merah.
 
----
+### 2. Ekstraksi Fitur Forensik
+Sistem mengekstrak 7 parameter utama:
+- `max_sim`: Nilai korelasi tertinggi (Normalized Cross Correlation) antar-pasangan glif terpisah. Pada tulisan manusia nilainya berada di bawah 0.925, sedangkan font sintetis mencapai 0.940 hingga 0.995.
+- `clone_ratio`: Proporsi glif pada naskah yang memiliki pasangan kembar dengan korelasi tinggi (NCC >= 0.93).
+- `cluster_3plus_count`: Jumlah kelompok karakter identik yang berulang 3 kali atau lebih lintas baris.
+- `stroke_cv`: Koefisien variasi ketebalan goresan pena berdasarkan Euclidean Distance Transform sepanjang sumbu skeleton goresan.
+- `baseline_res_std`: Standar deviasi residu penempatan huruf terhadap kurva garis mistar buku bergaris.
+- `height_cv`: Entropi variasi tinggi karakter untuk mengukur fluktuasi biologis tangan manusia.
+- `ink_std`: Standar deviasi nilai warna piksel tinta untuk menilai gradien serapan serat kertas dibanding warna solid rendering komputer.
 
-## 🔬 Metodologi & Arsitektur Forensik
+### 3. Logika Klasifikasi Dual-Layer
+1. Lapisan Aturan Vektor (Hard Clone Law): Naskah langsung ditandai sintetis apabila ditemukan pengulangan karakter yang secara fisik tidak mungkin dihasilkan motorik manusia (`max_sim >= 0.950`, atau kombinasi `clone_ratio >= 0.035` dan `max_sim >= 0.930`, atau `cluster_3plus_count >= 1`).
+2. Lapisan Machine Learning: Untuk teks bersambung (kursif) atau teks pendek, model Random Forest mengevaluasi vektor fitur secara multivariat untuk menentukan probabilitas keaslian.
 
-```
-                      [ Pindaian / Foto Naskah ]
-                                   │
-                                   ▼
-        [ Illumination-Invariant Background Estimation (cv2.absdiff) ]
-                                   │
-                                   ▼
-      [ Eliminasi Header Cetak Kertas (12%) & Garis Tepi Merah Margin ]
-                                   │
-                                   ▼
-       ┌───────────────────────────┴───────────────────────────┐
-       ▼                                                       ▼
-[ Ekstraksi Glif & NCC ]                             [ Morfologi & Pigmen ]
- • Max NCC Similarity                                 • Stroke Width CV (Distance Transform)
- • Clone Ratio (NCC ≥ 0.93)                           • Baseline Rigidity (Polynomial Fit)
- • Cluster 3+ Allographs                              • Glyph Height Entropy
-                                                      • Ink Color Std (Pigment Gradient)
-       └───────────────────────────┬───────────────────────────┘
-                                   │
-                                   ▼
-                     [ Vektor Forensik 7-Dimensi ]
-                                   │
-               ┌───────────────────┴───────────────────┐
-               ▼                                       ▼
-    [ Lapisan 1: Hard Clone Law ]             [ Lapisan 2: ML Random Forest ]
-     • Max NCC ≥ 0.950                         • Pipeline StandardScaler + RF
-     • Clone Ratio ≥ 0.035 & NCC ≥ 0.930       • Estimasi Probabilitas Multivariat
-     • Cluster 3+ ≥ 1 & NCC ≥ 0.930            • Menangani Font Kursif/Sambung
-               └───────────────────┬───────────────────┘
-                                   │
-                                   ▼
-          [ Hasil Verifikasi: LOLOS (OTENTIK) / TERINDIKASI SINTETIS ]
-```
+## Hasil Pengujian dan Benchmark
 
-### Parameter Evaluasi Forensik
+Evaluasi dilakukan terhadap seluruh dataset proyek tanpa sampling:
 
-1. **Korelasi Kemiripan Glif (Max NCC)**: Mengukur nilai *Normalized Cross Correlation* tertinggi antar-karakter yang terpisah pada naskah. Tangan manusia menghasilkan korelasi kebetulan $\le 0.925$, sedangkan generator font mengulang template yang sama persis ($\ge 0.940 - 0.995$).
-2. **Rasio Glif Kembar (Clone Ratio)**: Persentase karakter pada dokumen yang memiliki kembaran identik pada kata lain.
-3. **Klaster Alograf Berulang ($\ge 3$ Cluster)**: Frekuensi karakter identik yang muncul berulang 3 kali atau lebih lintas baris.
-4. **Variasi Tekanan Tinta (Stroke Width CV)**: Dihitung menggunakan *Euclidean Distance Transform* sepanjang sumbu goresan. Pena digital/plotter memiliki ketebalan konstan (CV rendah), sementara pena manusia memiliki penipisan goresan (*tapering*) dan gradien tekanan alami.
-5. **Linearitas Garis Dasar (Baseline Rigidity)**: Standar deviasi residu penempatan huruf terhadap kurva garis mistar buku.
-6. **Entropi Bentuk Karakter**: Variasi proporsi tinggi-lebar karakter yang mencerminkan fluktuasi biologis manusia.
-7. **Gradien Warna Pigmen Tinta (`ink_std`)**: Menilai variasi saturasi resapan tinta pulpen asli pada pori-pori kertas vs warna solid flat hasil *render* piksel komputer.
+| Kategori Data | Jumlah Sampel | Prediksi Sintetis | Prediksi Otentik | Akurasi |
+| :--- | :---: | :---: | :---: | :---: |
+| Data Sintetis (43 variasi font) | 350 | 350 | 0 | 100.0% |
+| Data Tulisan Tangan Asli (Mahasiswa & IAM) | 181 | 0 | 181 | 100.0% |
 
----
+- Stratified 5-Fold Cross Validation: Akurasi 99.44%, ROC-AUC 0.9999.
+- 0 False Positives pada data asli mahasiswa.
+- 0 False Negatives pada data sintetis font.
 
-## 📊 Hasil Uji Benchmark & Akurasi
+## Fitur Aplikasi
 
-Model dievaluasi secara menyeluruh terhadap **350 sampel data sintetis** (43 variasi font kursif, santai, dan rapi) serta **181 sampel naskah asli manusia** (koleksi tugas mahasiswa nyata via foto kamera smartphone & database IAM):
+- Meja Periksa: Input berkas berbasis drag-and-drop dengan visualisasi proses pemindaian.
+- Lembar Analisis: Menampilkan citra dokumen lengkap dengan penanda pin glif kembar, baki legenda interaktif, overlay kisi mistar, dan kaca pembesar 2.5x.
+- Parameter Terhitung: Menampilkan nilai pengukuran nyata (Kemiripan Glif, Entropi Bentuk, Tekanan Tinta, Linearitas Garis Dasar).
+- Buku Catatan Arsip: Tabel audit riwayat pengujian dengan pencarian teks dan filter status.
+- Berita Acara PDF: Format laporan resmi siap cetak tanpa menyertakan tombol navigasi UI.
 
-| Kategori Data | Total Naskah | Hasil Uji: Sintetis | Hasil Uji: Otentik | Akurasi | False Positives | False Negatives |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Data Sintetis / AI (`synthetic/`)** | **350** | **350** (100.0%) | 0 | **100.0%** | 0 | **0** |
-| **Data Asli Mahasiswa (`real/`)** | **181** | 0 | **181** (100.0%) | **100.0%** | **0** | 0 |
-
-- **5-Fold Stratified Cross-Validation**: Akurasi $99.44\%$, ROC-AUC $0.9999$.
-- **0 False Negatives**: Seluruh naskah buatan font digital berhasil diidentifikasi sebagai *TERINDIKASI SINTETIS*.
-- **0 False Positives**: Seluruh lembar tulisan tangan asli mahasiswa terverifikasi sebagai *LOLOS (OTENTIK)* tanpa kotak merah palsu.
-
----
-
-## 🖥 Fitur Antarmuka Pengguna
-
-- **Meja Periksa Naskah**:
-  - *Drag-and-drop* pengunggahan berkas pindaian/foto naskah (JPG, PNG, WEBP).
-  - Simulasi pemindaian laser presisi dengan estimasi sudut rotasi dan deteksi kepadatan glif.
-- **Lembar Analisis Forensik**:
-  - **Anotasi Vektor Interaktif**: Kotak penanda dinamis dengan pin berlabel (`①`, `②`, `③`) yang menyorot karakter kembar pada dokumen.
-  - **Kaca Pembesar 2.5x**: Pembesaran resolusi tinggi untuk memeriksa serat kertas dan mikro-goresan tinta secara langsung.
-  - **Kisi Mistar (Ruler Grid Calibration)**: Overlay garis kalibrasi mistar 50px untuk memeriksa linearitas baris.
-  - **Metrik Forensik Murni**: Menampilkan 4 parameter utama terhitung (Kemiripan Glif, Entropi Bentuk, Variasi Tekanan Tinta, Linearitas Garis Dasar) tanpa data *mock*.
-  - **Styling Adaptif**: Tampilan tema hijau zamrud (*emerald*) untuk naskah otentik dan palet peringatan terkalibrasi untuk naskah sintetis.
-- **Buku Catatan Arsip**:
-  - Ledger audit otomatis yang mencatat histori pemeriksaan, nomor berkas, NIM mahasiswa, checksum SHA-256, dan status verifikasi.
-  - Fitur pencarian instan berdasarkan nama/NIM dan filter status naskah.
-- **Ekspor Berita Acara Forensik (PDF)**:
-  - Format Berita Acara Pemeriksaan resmi yang dioptimalkan untuk cetak PDF fisik tanpa elemen tombol antarmuka yang tidak relevan.
-
----
-
-## 📂 Struktur Proyek
+## Struktur Direktori
 
 ```text
 AsliTulis/
 ├── backend/
 │   ├── app/
-│   │   ├── features.py             # Ekstraksi fitur forensik CV & segmentasi glif
-│   │   └── main.py                 # Endpoint API FastAPI (/api/classify) & static router
+│   │   ├── features.py             # Ekstraksi fitur visual dan pemrosesan citra
+│   │   └── main.py                 # API FastAPI dan static file serving
 │   ├── data/
-│   │   ├── download_fonts.py       # Pengunduh 43 koleksi font Google Fonts
-│   │   ├── download_real_data.py   # Pipeline ekstraksi dataset tulisan tangan asli (IAM)
-│   │   ├── generate_fake.py        # Generator citra sintetis dengan augmentasi kamera HP
-│   │   ├── sentences.json          # Korpus naskah Bahasa Indonesia
-│   │   ├── real/                   # 181 foto naskah tulisan tangan asli manusia
-│   │   ├── synthetic/              # 350 citra naskah sintetis / AI font
-│   │   └── train.py                # Pipeline pelatihan & validasi Random Forest
+│   │   ├── download_fonts.py       # Pengunduh font TrueType Google Fonts
+│   │   ├── download_real_data.py   # Script ekstraksi sampel tulisan asli IAM
+│   │   ├── generate_fake.py        # Generator citra naskah sintetis
+│   │   ├── sentences.json          # Korpus teks Bahasa Indonesia
+│   │   ├── real/                   # Dataset naskah asli manusia (181 citra)
+│   │   ├── synthetic/              # Dataset naskah font sintetis (350 citra)
+│   │   └── train.py                # Pipeline pelatihan model Random Forest
 │   └── models/
-│       └── classifier.joblib       # Model bundle (Scaler, Random Forest, Feature Weights)
+│       └── classifier.joblib       # Model biner terkompresi
 ├── frontend/
-│   ├── assets/                     # Logo SVG dan sampel citra pengujian
+│   ├── assets/                     # Sampel pengujian dan aset gambar
 │   ├── css/
-│   │   └── style.css               # Styling antarmuka berbasis Stitch Archival System
+│   │   └── style.css               # Desain antarmuka konsol
 │   ├── js/
-│   │   └── app.js                  # Frontend controller, SVG overlay & archive ledger
-│   └── index.html                  # Halaman aplikasi web tunggal (SPA)
+│   │   └── app.js                  # Logika interaktif antarmuka
+│   └── index.html                  # Halaman utama aplikasi
 ├── tests/
-│   ├── screenshots/                # Tangkapan layar hasil verifikasi visual E2E
-│   ├── test_full_app_e2e.py        # Suite pengujian Playwright end-to-end browser
-│   └── test_model_accuracy.py      # Pengujian unit akurasi dataset 100% (unittest)
-├── requirements.txt                # Dependensi Python
-└── README.md                       # Dokumentasi resmi proyek
+│   ├── screenshots/                # Bukti visual hasil pengujian otomatis
+│   ├── test_full_app_e2e.py        # Pengujian antarmuka browser dengan Playwright
+│   └── test_model_accuracy.py      # Pengujian unit akurasi dataset
+├── requirements.txt
+└── README.md
 ```
 
----
+## Panduan Instalasi dan Menjalankan Sistem
 
-## 🚀 Panduan Memulai Cepat
+### Prasyarat
+- Python 3.10 atau versi yang lebih baru
+- Chromium atau Google Chrome (untuk uji end-to-end)
 
-### 1. Prasyarat Sistem
-- Python 3.11 atau 3.12
-- Chromium / Google Chrome (untuk eksekusi pengujian otomatis Playwright)
-
-### 2. Instalasi Dependensi
+### Instalasi
 ```bash
 # Clone repositori
 git clone https://github.com/DarulQutni-Q/AsliTulis.git
 cd AsliTulis
 
-# Siapkan virtual environment
+# Buat virtual environment
 python3 -m venv .venv
 source .venv/bin/activate
 
 # Pasang dependensi
 pip install -r requirements.txt
-
-# (Opsional) Pasang browser Playwright untuk keperluan automated testing
-playwright install chromium
 ```
 
-### 3. Menjalankan Server Aplikasi
-Jalankan server aplikasi berbasis FastAPI dan Uvicorn:
+### Menjalankan Server
 ```bash
 ./.venv/bin/uvicorn backend.app.main:app --host 0.0.0.0 --port 8000
 ```
-Buka peramban dan akses: **`http://localhost:8000`**
+Buka browser pada alamat `http://localhost:8000`.
 
----
+### Menjalankan Pengujian
 
-## 🧪 Menjalankan Pengujian Otomatis
-
-### Pengujian Akurasi Model (350 Fake & 181 Real)
-Verifikasi bahwa seluruh data sintetis terdeteksi sebagai fake dan seluruh data manusia terdeteksi sebagai otentik (100% akurasi):
+1. Uji Akurasi Model (350 data fake dan 181 data real):
 ```bash
 ./.venv/bin/python tests/test_model_accuracy.py
 ```
 
-### Pengujian End-to-End Browser (Playwright)
-Menjalankan simulasi antarmuka peramban headless, pengunggahan berkas nyata, interaktivitas toolbar, filter arsip, dan audit cetak PDF:
+2. Uji End-to-End Browser (Playwright):
 ```bash
 ./.venv/bin/python tests/test_full_app_e2e.py
 ```
 
----
+## Spesifikasi API
 
-## 📄 Lisensi & Hak Cipta
+### POST `/api/classify`
+Menerima berkas citra naskah dan mengembalikan hasil evaluasi forensik.
 
-Proyek ini didistribusikan di bawah lisensi [MIT License](LICENSE). Font tulisan tangan yang digunakan untuk dataset sintetis bersumber dari Google Fonts di bawah lisensi SIL Open Font License (OFL 1.1) dan Apache License 2.0. Dataset tulisan tangan asli diadaptasi dari IAM Handwriting Database untuk keperluan riset integritas akademik.
+- Request: `multipart/form-data` dengan field `file` (JPG, PNG, WEBP).
+- Response contoh:
+```json
+{
+  "label": "suspect",
+  "probability": 99,
+  "verdict_type": "suspect",
+  "status_label": "TERINDIKASI SINTETIS",
+  "verdict_text": "Terindikasi Sintetis / Pen-Plotter (Font Identik Berulang)",
+  "recommendation": "Peringatan: Terdeteksi glif berulang identik dengan kemiripan hingga 99.1%...",
+  "metrics": {
+    "glyph_similarity": "99.1%",
+    "entropy": "20.5% (Variatif)",
+    "pressure": "Dinamis Alami (CV 0.39)",
+    "baseline": "68.8% Organik"
+  },
+  "top_pairs_count": 3
+}
+```
+
+## Lisensi
+
+Proyek ini menggunakan lisensi MIT. Lihat file `LICENSE` untuk informasi selengkapnya. Font yang digunakan dalam dataset sintetis bersumber dari Google Fonts dengan lisensi SIL Open Font License (OFL 1.1) dan Apache License 2.0.
